@@ -939,6 +939,7 @@ CompileFunction(
 	 *    <prosrc>
 	 *  })
 	 */
+	appendStringInfo(&src, "\nfunction require(file) { var exports = { }; var script = plv8._require(file); if (script) { eval(script); } return exports; }\n");
 	appendStringInfo(&src, "(function (");
 	if (is_trigger)
 	{

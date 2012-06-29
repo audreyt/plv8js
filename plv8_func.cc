@@ -25,6 +25,7 @@ extern "C" {
 #undef using
 } // extern "C"
 
+
 using namespace v8;
 
 static Handle<v8::Value> plv8_FunctionInvoker(const Arguments& args) throw();
@@ -42,6 +43,7 @@ static Handle<v8::Value> plv8_FindFunction(const Arguments& args);
 static Handle<v8::Value> plv8_QuoteLiteral(const Arguments& args);
 static Handle<v8::Value> plv8_QuoteNullable(const Arguments& args);
 static Handle<v8::Value> plv8_QuoteIdent(const Arguments& args);
+static Handle<v8::Value> plv8_Require(const Arguments& args);
 
 #if PG_VERSION_NUM < 90100
 /*
@@ -177,6 +179,7 @@ SetupPlv8Functions(Handle<ObjectTemplate> plv8)
 	SetCallback(plv8, "quote_literal", plv8_QuoteLiteral, attrFull);
 	SetCallback(plv8, "quote_nullable", plv8_QuoteNullable, attrFull);
 	SetCallback(plv8, "quote_ident", plv8_QuoteIdent, attrFull);
+  SetCallback(plv8, "_require", plv8_Require, attrFull);
 
 	plv8->SetInternalFieldCount(PLV8_INTNL_MAX);
 }
@@ -752,3 +755,42 @@ plv8_QuoteIdent(const Arguments& args)
 
 	return ToString(result);
 }
+
+
+
+static Handle<v8::Value>
+plv8_Require(const Arguments& args) {
+	if (args.Length() < 1 || args[0]->IsNull() || args[0]->IsUndefined())
+		return Undefined();
+
+	String::Utf8Value name(args[0]);
+
+	if (*name == NULL) {
+		return ThrowException(String::New("Error loading file"));
+	}
+
+	FILE* file = fopen(*name, "rb");
+	if (file == NULL) {
+		return Handle<String>();
+	}
+
+	fseek(file, 0, SEEK_END);
+	int size = ftell(file);
+	rewind(file);
+
+	char* chars = new char[size + 1];
+	chars[size] = '\0';
+
+	for (int i = 0; i < size;) {
+		int read = static_cast<int>(fread(&chars[i], 1, size - i, file));
+		i += read;
+	}
+
+	fclose(file);
+	Handle<String> result = String::New(chars, size);
+
+	delete[] chars;
+
+	return result;
+}
+
