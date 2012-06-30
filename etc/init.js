@@ -1,9 +1,13 @@
 
 
-function require(file) {
+function require (file) {
   // extremely naive handling of pathing
   var paths = [ "/usr/local/plv8/lib/", "/usr/local/plv8/plv8_modules/" ];
-  
+
+  if (file.match(".+js$") === null) {
+    file += ".js";
+  }
+
   var exports = { };
   for (var i = 0; i < paths.length; i++) {
     var script = plv8._require(paths[i] + file);
@@ -12,7 +16,7 @@ function require(file) {
       return exports;
     }
   }
-  throw Error("Cannot to find module '" + file+ "'");
+  throw Error("Cannot to find module '" + file + "'");
 }
 
 var console = {
