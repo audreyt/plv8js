@@ -57,7 +57,11 @@ PG_VERSION_NUM := $(shell perl -ne 'print $$1 if /PG_VERSION_NUM\s+(\d+)/' \
 ifeq ($(shell test $(PG_VERSION_NUM) -ge 90100 && echo yes), yes)
 plv8.sql:
 DATA_built =
-install: plv8--$(EXTVER).sql
+install: plv8--$(EXTVER).sql modules
+modules:
+	mkdir -p /usr/local/plv8/lib
+	cp etc/init.js /usr/local/plv8/init.js
+	cp etc/plv8_modules/* /usr/local/plv8/lib/
 plv8--$(EXTVER).sql: plv8.sql.c
 	$(CC) -E -P $(CPPFLAGS) $< > $@
 subclean:
