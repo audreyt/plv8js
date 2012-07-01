@@ -61,7 +61,7 @@ install: plv8--$(EXTVER).sql modules
 modules:
 	mkdir -p /usr/local/plv8/lib
 	cp etc/init.js /usr/local/plv8/init.js
-	cp etc/plv8_modules/* /usr/local/plv8/lib/
+	cp etc/lib/* /usr/local/plv8/lib/
 plv8--$(EXTVER).sql: plv8.sql.c
 	$(CC) -E -P $(CPPFLAGS) $< > $@
 subclean:
