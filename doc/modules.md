@@ -76,7 +76,7 @@ Asserts whether two values are not strictly equal (!==)
 
 ## Caveats
 
-Currently there is no support for relative paths in `require()`, but that should change in a couple of revisions.
-
+- Currently there is no support for relative paths in `require()`, but that should change in a couple of revisions.
+- Modules are not cached, and currently will be executed on every reload.
 
 
