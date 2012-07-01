@@ -10,6 +10,10 @@ exports.warn = function () {
   plv8.elog(WARNING, util.format.apply(this, arguments));
 };
 
+exports.debug = function () {
+  plv8.elog(DEBUG, util.format.apply(this, arguments));
+};
+
 exports.error = function () {
   plv8.elog(ERROR, util.format.apply(this.arguments));
 };
