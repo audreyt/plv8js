@@ -1,5 +1,3 @@
-
-
 function require (file) {
   // extremely naive handling of pathing
   var paths = [ "/usr/local/plv8/lib/", "/usr/local/plv8/plv8_modules/" ];
@@ -10,7 +8,7 @@ function require (file) {
 
   var exports = { };
   for (var i = 0; i < paths.length; i++) {
-    var script = plv8._require(paths[i] + file);
+    var script = plv8._read_file(paths[i] + file);
     if (script) {
       eval(script);
       return exports;

@@ -43,7 +43,7 @@ static Handle<v8::Value> plv8_FindFunction(const Arguments& args);
 static Handle<v8::Value> plv8_QuoteLiteral(const Arguments& args);
 static Handle<v8::Value> plv8_QuoteNullable(const Arguments& args);
 static Handle<v8::Value> plv8_QuoteIdent(const Arguments& args);
-static Handle<v8::Value> plv8_Require(const Arguments& args);
+static Handle<v8::Value> plv8_ReadFile(const Arguments& args);
 
 #if PG_VERSION_NUM < 90100
 /*
@@ -179,7 +179,7 @@ SetupPlv8Functions(Handle<ObjectTemplate> plv8)
 	SetCallback(plv8, "quote_literal", plv8_QuoteLiteral, attrFull);
 	SetCallback(plv8, "quote_nullable", plv8_QuoteNullable, attrFull);
 	SetCallback(plv8, "quote_ident", plv8_QuoteIdent, attrFull);
-  SetCallback(plv8, "_require", plv8_Require, attrFull);
+  SetCallback(plv8, "_read_file", plv8_ReadFile, attrFull);
 
 	plv8->SetInternalFieldCount(PLV8_INTNL_MAX);
 }
@@ -759,7 +759,8 @@ plv8_QuoteIdent(const Arguments& args)
 
 
 static Handle<v8::Value>
-plv8_Require(const Arguments& args) {
+plv8_ReadFile(const Arguments& args)
+{
 	if (args.Length() < 1 || args[0]->IsNull() || args[0]->IsUndefined())
 		return Undefined();
 
