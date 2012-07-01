@@ -39,6 +39,9 @@ There are a couple of built-in modules to get things going.
 
 Assertion modules (useful for testing).
 
+    var assert = require('assert');
+
+
 #### assert.ok(guard, message)
 
 Asserts whether a value is truthy.  This is a synonym of `assert.equal(true, !!guard, message)`.
@@ -67,15 +70,13 @@ Asserts whether two values are strictly equal (===).
 
 Asserts whether two values are not strictly equal (!==)
 
+### Util
+
+    var util = require('util');
+
 ## Caveats
 
 Currently there is no support for relative paths in `require()`, but that should change in a couple of revisions.
 
 
-Basic utility module.
 
-### Util
-
-    var util = require('util');
-
-#### 
