@@ -74,6 +74,10 @@ Asserts whether two values are not strictly equal (!==)
 
     var util = require('util');
 
+### Console
+
+    var console = require('console');
+
 ## Caveats
 
 - Currently there is no support for relative paths in `require()`, but that should change in a couple of revisions.

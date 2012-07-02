@@ -14,7 +14,7 @@ function that is callable from SQL.
 Changes From Official Version
 -----------------------------
 
-- Added node.js style module system
+- Added CommonJS module system
 - Added require()
 - Added initialization script
 

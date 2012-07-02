@@ -1,4 +1,5 @@
-function require (file) {
+
+function _require (file) {
   // extremely naive handling of pathing
   var paths = [ "/usr/local/plv8/lib/", "/usr/local/plv8/plv8_modules/" ];
 
@@ -17,3 +18,4 @@ function require (file) {
   throw Error("Cannot to find module '" + file + "'");
 }
 
+var require = _require;
