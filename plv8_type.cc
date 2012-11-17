@@ -1,5 +1,9 @@
-/*
+/*-------------------------------------------------------------------------
+ *
  * plv8_type.cc : Postgres from/to v8 data converters.
+ *
+ * Copyright (c) 2009-2012, the PLV8JS Development Group.
+ *-------------------------------------------------------------------------
  */
 #include "plv8.h"
 
@@ -10,6 +14,9 @@ extern "C" {
 #define	typename	typename_
 #define	using		using_
 
+#if PG_VERSION_NUM >= 90300
+#include "access/htup_details.h"
+#endif
 #include "catalog/pg_type.h"
 #include "utils/array.h"
 #include "utils/date.h"

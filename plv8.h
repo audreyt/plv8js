@@ -1,6 +1,14 @@
+/*-------------------------------------------------------------------------
+ *
+ * plv8.h
+ *
+ * Copyright (c) 2009-2012, the PLV8JS Development Group.
+ *-------------------------------------------------------------------------
+ */
 #ifndef _PLV8_
 #define _PLV8_
 
+#include "plv8_config.h"
 #include <v8.h>
 #include <vector>
 
