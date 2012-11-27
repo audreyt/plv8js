@@ -1,46 +1,31 @@
 const { USER } = process.env
 @include = ->
     @use \bodyParser, @app.router, @express.static __dirname
-    @get '/': \hi
     @get '/roundtrip': ->
         res <~ reqToPg(@req)
         handleResponseFromPg.call @,res
-    @get '/REQ': ->
-        @response.json 200 simplifyRequest(@req)
     @get '/hi':  ->
+        setupDatabase
+        @response.send 200 "Database configurated"
+
+setupDatabase = ->
         pg = require 'pg'
         conString = "tcp://#USER@localhost/#USER"
         client = new pg.Client conString
         client.connect!
 
-        client.query 'CREATE TEMP TABLE beatles(name varchar(10), height integer, birthday timestamptz)'
-
-        client.query 'INSERT INTO beatles(name, height, birthday) values($1, $2, $3)', [
-          'Ringo'
-          67
-          new Date 1945, 11, 2
-        ]
-
-        client.query 'INSERT INTO beatles(name, height, birthday) values($1, $2, $3)', [
-          'John'
-          68
-          new Date 1944, 10, 13
-        ]
-
-        console.log """
+        restInsert = """
             CREATE OR REPLACE FUNCTION rest (req json) RETURNS json AS $$
                 return (#{ rest })(req);
             $$ LANGUAGE plv8 IMMUTABLE STRICT;
         """
-        client.query """
-            CREATE OR REPLACE FUNCTION rest (req json) RETURNS json AS $$
-                return (#{ rest })(req);
-            $$ LANGUAGE plv8 IMMUTABLE STRICT;
-        """
+        console.log "Injecting REST wrapper into database: \n#restInsert"
+        client.query restInsert
 
-        _, result <~ client.query 'SELECT * from beatles'
-        @response.json 200 result
 
+
+# This function is never run in the Express webserver context. It's stringified
+# and injected into postgres
 rest = ->
     JSON.stringify do
         status-code: 200
