@@ -46,6 +46,7 @@ if so, you'll probably need V8_OUTDIR pointing where libv8 is located.
 Run make:
 
   $ make V8_SRCDIR=/path/to/v8 V8_OUTDIR=/path/to/v8/out/native install
+  $ make modules
 
 If you prefer to build plv8 statically linking with v8, try V8_STATIC_SNAPSHOT
 or V8_STATIC_NOSNAPSHOT.  Consult Makefile for more detail.
