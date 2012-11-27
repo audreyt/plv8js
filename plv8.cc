@@ -985,6 +985,8 @@ ReadInitScript(const char *filename)
 	return chars;
 }
 
+#include "fs.cc"
+
 static Local<Function>
 CompileFunction(
 	const char *proname,
@@ -1050,6 +1052,8 @@ CompileFunction(
 	pfree(src.data);
 
 	Context::Scope	context_scope(global_context);
+	Handle<Object> context_global = global_context->Global();
+	js::install_native_fs(context_global);
 	TryCatch		try_catch;
 	Local<Script>	script = Script::New(source, name);
 
