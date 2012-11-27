@@ -1,17 +1,18 @@
 const { USER } = process.env
 require! pg
 const pgConString = "tcp://#USER@localhost/#USER"
-
+pgClient = null
 
 @include = ->
-    pgClient <- setupDatabase!
     @use \bodyParser, @app.router, @express.static __dirname
     @get '/roundtrip': ->
-        res <~ sendRequestToPg(pgClient @req)
-        serveResponseFromPg.call @,res
-    @get '/hi':  ->
-        setupDatabase
+        res <~ sendRequestToPg pgClient, @req
+        serveResponseFromPg.call @, res
+    @get '/hi': ->
         @response.send 200 "Database configurated"
+    @get '/': ->
+        @response.send 200 "Database configurated"
+    pgClient := setupDatabase!
 
 setupDatabase = ->
         client = new pg.Client pgConString
@@ -30,7 +31,7 @@ setupDatabase = ->
 simplifyRequest = ->
         JSON.stringify it{method, url, query, params, headers, body }
 
-sendReqToPg = (client, req, cb) ->
+sendRequestToPg = (client, req, cb) ->
         require! pg
         conString = "tcp://#USER@localhost/#USER"
         err, result <~ client.query 'SELECT rest($1) as res' [ simplifyRequest req ]
@@ -44,18 +45,14 @@ serveResponseFromPg = ({headers,type,statusCode,body}) ->
     @response.send statusCode, body
 
 
-
-
 # This function is never run in the Express webserver context. It's stringified
 # and injected into postgres
 rest = ->
+    req = JSON.parse it
+    result = plv8.execute req.query.q if req.query.q?
     JSON.stringify do
         status-code: 200
         type: \application/json
         headers:
             'X-Server': 'PostgreSQL'
-        body:
-            orig: JSON.parse it
-            extra: \nice
-
-
+        body: { result, orig: req }
