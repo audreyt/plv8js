@@ -5,7 +5,7 @@ module = function(pathfilename){
   return this.exports = {};
 };
 require = function(modulename){
-  var filename, delim, c, rp, __dirname, __filename, T, stats, fname, packagejson, pos, suffix, m, fn, exports, key;
+  var filename, delim, c, rp, __dirname, __filename, T, stats, fname, packagejson, pos, suffix, m, body, fn;
   filename = modulename;
   delim = require.path_delim;
   c = filename.charAt(0);
@@ -31,6 +31,9 @@ require = function(modulename){
     __dirname = rp;
     __filename = packagejson.main;
     T = rp + delim + __filename;
+    if (!/\.js$/.test(T)) {
+      T += '.js';
+    }
   } else {
     if (stats.isFile) {
       T = rp;
@@ -58,14 +61,13 @@ require = function(modulename){
   if (suffix === '.js') {
     m = new module(T);
     require.loading[rp] = m;
-    fn = new Function('module, exports, __dirname, __filename', native_fs_.readFileSync(T));
-    exports = m.exports;
-    fn(m, exports, __dirname, __filename);
+    body = native_fs_.readFileSync(T);
+    fn = new Function("module", "exports", "__dirname", "__filename", body);
+    native_fs_.chdir(__dirname);
+    m.exports = {};
+    fn(m, m.exports, __dirname, __filename);
     require.loaded[rp] = m;
     require.loading[rp] = undefined;
-    for (key in exports) {
-      m.exports[key] = exports[key];
-    }
     return m.exports;
   } else {
     if (suffix === '.node') {
@@ -84,17 +86,12 @@ require.resolvePath = function(filename){
     return filename;
   } else {
     fnar = filename.split(path_delim);
-    dir = void 8;
-    if (typeof __dirname === 'undefined') {
-      dir = native_fs_.getcwd();
-    } else {
-      dir = __dirname;
-    }
+    dir = typeof __dirname === 'undefined' ? native_fs_.getcwd() : __dirname;
     dirar = dir.split(path_delim);
     i = 0;
     n = fnar.length;
     while (i < n) {
-      t = fnar[i];
+      t = fnar[i++];
       if (t === '.') {
         continue;
       } else if (t === '..') {
@@ -102,7 +99,6 @@ require.resolvePath = function(filename){
       } else {
         dirar.push(t);
       }
-      i++;
     }
     return dirar.join(path_delim);
   }

@@ -21,6 +21,7 @@ require = (modulename) ->
     __dirname = rp
     __filename = packagejson.main
     T = rp + delim + __filename
+    T += '.js' if T isnt /\.js$/
   else
     if stats.isFile
       T = rp
@@ -40,13 +41,15 @@ require = (modulename) ->
   if suffix is '.js'
     m = new module T
     require.loading[rp] = m
-    fn = new Function 'module, exports, __dirname, __filename', native_fs_.readFileSync T
-    exports = m.exports
-    fn m, exports, __dirname, __filename
+    body = native_fs_.readFileSync T
+    fn = new Function "module" "exports" "__dirname" "__filename" body
+    # XXX: shouldn't really chdir, but just calculate logic cwd for require
+    # caller
+    native_fs_.chdir __dirname
+    m.exports = {}
+    fn m, m.exports, __dirname, __filename
     require.loaded[rp] = m
     require.loading[rp] = ``undefined``
-    for key of exports
-      m.exports[key] = exports[key]
     m.exports
   else
     if suffix is '.node'
@@ -62,15 +65,13 @@ require.resolvePath = (filename) ->
     filename
   else
     fnar = filename.split path_delim
-    dir = void
-    if typeof __dirname is 'undefined' then dir = native_fs_.getcwd! else dir = __dirname
+    dir = if typeof __dirname is 'undefined' then native_fs_.getcwd! else __dirname
     dirar = dir.split path_delim
     i = 0
     n = fnar.length
     while i < n
-      t = fnar[i]
+      t = fnar[i++]
       if t is '.' then continue else if t is '..' then dirar.pop! else dirar.push t
-      i++
     dirar.join path_delim
 
 require.path_delim = '/'
