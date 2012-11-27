@@ -3,8 +3,7 @@
     @get '/': \hi
     @get '/roundtrip': ->
         res <~ reqToPg(@req)
-        console.log res
-        @response.json 200 res
+        handleResponseFromPg.call @,res
     @get '/REQ': ->
         @response.json 200 simplifyRequest(@req)
     @get '/hi':  ->
@@ -46,4 +45,7 @@ reqToPg = (req, cb) ->
         cb JSON.parse result.rows.0.res
 
 
-
+handleResponseFromPg({headers,type,statusCode,body}) ->
+    for k,v of headers => @response.set k,v
+    @response.type type 
+    @response.send statusCode body
