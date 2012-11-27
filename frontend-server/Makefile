@@ -1,3 +1,3 @@
 all :: run
 run ::
-	lsc server.ls
+	nodemon -x lsc server.ls -w .
