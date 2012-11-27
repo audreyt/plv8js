@@ -102,6 +102,7 @@ all: $(DATA)
 %.control: plv8.control.common
 	sed -e 's/@PLV8_VERSION@/$(PLV8_VERSION)/g' $< | $(CC) -E -P -DLANG_$* - > $@
 modules:
+	lsc -bc etc
 	mkdir -p /usr/local/plv8/lib
 	cp etc/init.js /usr/local/plv8/init.js
 	cp etc/lib/* /usr/local/plv8/lib/
