@@ -10,7 +10,8 @@
   "dependencies": {
     "pg": "*",
     "zappajs": "0.4.x",
-    "nodemon": "*"
+    "nodemon": "*",
+    "squel": "*"
   },
   "directories": {
     "bin": "./bin"

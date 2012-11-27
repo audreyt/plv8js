@@ -10,6 +10,7 @@ dependencies:
   pg: \*
   zappajs: \0.4.x
   nodemon: \*
+  squel: \*
 directories:
   bin: \./bin
 scripts:
