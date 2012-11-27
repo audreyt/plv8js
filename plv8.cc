@@ -961,6 +961,30 @@ Compile(Oid fn_oid, MemoryContext fn_mcxt, bool validate, bool is_trigger, Diale
 	return proc;
 }
 
+static char *
+ReadInitScript(const char *filename)
+{
+	FILE* file = fopen(filename, "rb");
+	if (file == NULL) {
+		return NULL;
+	}
+
+	fseek(file, 0, SEEK_END);
+	int size = ftell(file);
+	rewind(file);
+
+	char* chars = new char[size + 1];
+	chars[size] = '\0';
+
+	for (int i = 0; i < size;) {
+		int read = static_cast<int>(fread(&chars[i], 1, size - i, file));
+		i += read;
+	}
+
+	fclose(file);
+	return chars;
+}
+
 static Local<Function>
 CompileFunction(
 	const char *proname,
@@ -984,6 +1008,12 @@ CompileFunction(
 	 *    <prosrc>
 	 *  })
 	 */
+	char *init = ReadInitScript("/usr/local/plv8/init.js");
+	if (init != NULL) {
+		appendStringInfo(&src, init);
+		delete[] init;
+	}
+//	appendStringInfo(&src, "\nfunction require(file) { var exports = { }; var script = plv8._require(file); if (script) { eval(script); } return exports; }\n");
 	appendStringInfo(&src, "(function (");
 	if (is_trigger)
 	{

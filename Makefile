@@ -101,6 +101,10 @@ all: $(DATA)
 	sed -e 's/@LANG_NAME@/$*/g' $< | $(CC) -E -P $(CPPFLAGS) - > $@
 %.control: plv8.control.common
 	sed -e 's/@PLV8_VERSION@/$(PLV8_VERSION)/g' $< | $(CC) -E -P -DLANG_$* - > $@
+modules:
+	mkdir -p /usr/local/plv8/lib
+	cp etc/init.js /usr/local/plv8/init.js
+	cp etc/lib/* /usr/local/plv8/lib/
 subclean:
 	rm -f plv8_config.h $(DATA) $(JSCS)
 
