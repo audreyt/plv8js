@@ -5,12 +5,12 @@ module = function(pathfilename){
   return this.exports = {};
 };
 require = function(modulename){
-  var filename, delim, c, rp, __dirname, __filename, T, stats, packagejson, pos, suffix, m, fn, exports, key;
+  var filename, delim, c, rp, __dirname, __filename, T, stats, fname, packagejson, pos, suffix, m, fn, exports, key;
   filename = modulename;
   delim = require.path_delim;
   c = filename.charAt(0);
   if (c !== '.' && c !== '/' && filename.indexOf(delim) < 0) {
-    filename = './node_modules/' + filename;
+    filename = '/usr/local/plv8/plv8_modules/' + filename;
   }
   rp = require.resolvePath(filename);
   if (require.loaded[rp] !== undefined) {
@@ -23,9 +23,10 @@ require = function(modulename){
   T = void 8;
   stats = native_fs_.statSync(rp);
   if (stats.isDirectory) {
-    packagejson = new Function('return ' + native_fs_.readFileSync(rp + delim + 'package.json'));
+    fname = rp + delim + 'package.json';
+    packagejson = new Function('return ' + native_fs_.readFileSync(fname))();
     if (packagejson.main === undefined) {
-      throw new Error('cannot find module of ' + modulename);
+      throw new Error("cannot find module of " + modulename + " (" + fname + " " + packagejson + "})");
     }
     __dirname = rp;
     __filename = packagejson.main;

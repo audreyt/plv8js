@@ -7,7 +7,7 @@ require = (modulename) ->
   filename = modulename
   delim = require.path_delim
   c = filename.charAt 0
-  filename = './node_modules/' + filename if c isnt '.' and c isnt '/' and (filename.indexOf delim) < 0
+  filename = '/usr/local/plv8/plv8_modules/' + filename if c isnt '.' and c isnt '/' and (filename.indexOf delim) < 0
   rp = require.resolvePath filename
   if require.loaded[rp] isnt ``undefined`` then return require.loaded[rp].exports else if require.loading[rp] isnt ``undefined`` then return require.loading[rp].exports
   __dirname = void
@@ -15,8 +15,9 @@ require = (modulename) ->
   T = void
   stats = native_fs_.statSync rp
   if stats.isDirectory
-    packagejson = new Function 'return ' + native_fs_.readFileSync rp + delim + 'package.json'
-    throw new Error 'cannot find module of ' + modulename if packagejson.main is ``undefined``
+    fname = rp + delim + 'package.json'
+    packagejson = (new Function 'return ' +  native_fs_.readFileSync fname)!
+    throw new Error "cannot find module of #modulename (#fname #packagejson})" if packagejson.main is ``undefined``
     __dirname = rp
     __filename = packagejson.main
     T = rp + delim + __filename
