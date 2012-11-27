@@ -2,12 +2,7 @@
     @use \bodyParser, @app.router, @express.static __dirname
     @get '/': \hi
     @get '/REQ': ->
-        simpleRequest = {
-            method: @request.method,
-            url: @request.url,
-            headers: @request.headers,
-        }
-        @response.json 200 simpleRequest
+        @response.json 200 simplifyRequest(@req)
     @get '/hi':  ->
         pg = require 'pg'
 
@@ -33,3 +28,7 @@
 
         _, result <~ client.query 'SELECT * from beatles'
         @response.json 200 result
+
+
+simplifyRequest = ->
+        it{method, url, query, params, headers, body }
