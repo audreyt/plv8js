@@ -60,18 +60,18 @@ require = (modulename) ->
 
 require.resolvePath = (filename) ->
   path_delim = require.path_delim
-  dirar = void
   if filename.0 is path_delim
     filename
   else
-    fnar = filename.split path_delim
     dir = if typeof __dirname is 'undefined' then native_fs_.getcwd! else __dirname
     dirar = dir.split path_delim
-    i = 0
-    n = fnar.length
-    while i < n
-      t = fnar[i++]
-      if t is '.' then continue else if t is '..' then dirar.pop! else dirar.push t
+    for t in filename.split path_delim
+      if t is '.'
+        continue
+      else if t is '..'
+        dirar.pop!
+      else
+        dirar.push t
     dirar.join path_delim
 
 require.path_delim = '/'

@@ -79,19 +79,15 @@ require = function(modulename){
   }
 };
 require.resolvePath = function(filename){
-  var path_delim, dirar, fnar, dir, i, n, t;
+  var path_delim, dir, dirar, i$, ref$, len$, t;
   path_delim = require.path_delim;
-  dirar = void 8;
   if (filename[0] === path_delim) {
     return filename;
   } else {
-    fnar = filename.split(path_delim);
     dir = typeof __dirname === 'undefined' ? native_fs_.getcwd() : __dirname;
     dirar = dir.split(path_delim);
-    i = 0;
-    n = fnar.length;
-    while (i < n) {
-      t = fnar[i++];
+    for (i$ = 0, len$ = (ref$ = filename.split(path_delim)).length; i$ < len$; ++i$) {
+      t = ref$[i$];
       if (t === '.') {
         continue;
       } else if (t === '..') {
