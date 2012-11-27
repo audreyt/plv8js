@@ -14,6 +14,9 @@ directories:
   bin: \./bin
 scripts:
   start: 'make run'
-  prepublish: 'lsc -cj package.ls || echo'
+  prepublish: """
+  lsc -cj package.ls || echo
+  lsc -bc .
+  """
 engines:
   node: \0.8.x

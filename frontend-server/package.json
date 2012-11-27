@@ -17,7 +17,7 @@
   },
   "scripts": {
     "start": "make run",
-    "prepublish": "lsc -cj package.ls || echo"
+    "prepublish": "lsc -cj package.ls || echo\nlsc -bc ."
   },
   "engines": {
     "node": "0.8.x"
