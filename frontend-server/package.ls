@@ -9,10 +9,11 @@ repository:
 dependencies:
   pg: \*
   zappajs: \0.4.x
+  nodemon: \*
 directories:
   bin: \./bin
 scripts:
-  start: 'lsc server.ls'
+  start: 'make run'
   prepublish: 'lsc -cj package.ls || echo'
 engines:
   node: \0.8.x
