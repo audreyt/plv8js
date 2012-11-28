@@ -2,6 +2,7 @@
 {List, Task} = require './model'
 
 ProtoList = do
+    tasks:              $from: \Task
     tasksAddedAtStart:  $from: \Task $query: CreatedAt: $: \CreatedAt
     tasksAddedAtLater:  $from: \Task $query: CreatedAt: $gt: $: \CreatedAt
     completeTasks:      $from: \Task $query: { +Complete }

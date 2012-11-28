@@ -41,7 +41,16 @@ require! \fs
         @res.send 200 [k for k of models]
 
     @get '/:appname/collections/:model/:id': ->
-        @res.send 200 findOne ...@params<[model id]>
+        {id, model} = @params
+        res = select memstore, model, -> it._id is id
+        return @res.send 404 {error: "No such ID"} unless res.length
+        @res.send 200 res.0
+
+    @get '/:appname/collections/:model/:id/:field': ->
+        {id, model, field} = @params
+        res = select memstore, model, -> it._id is id
+        return @res.send 404 {error: "No such ID"} unless res.length
+        @res.send 200 res.0[field]
 
     @post '/:appname/collections/:model': ->
         object = new models[@params.model] <<< @body
@@ -58,7 +67,9 @@ require! \fs
         @res.send 200 object
 
     @del '/:appname/collections/:model/:id': ->
-        @res.send 200 \notyet
+        {id, model} = @params
+        memstore[model] = memstore[model].filter -> it._id isnt id
+        @res.send 201 null
 
     @get '/:appname/collections/:model': ->
         @res.send 200 select memstore, @params.model
