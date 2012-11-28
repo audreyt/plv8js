@@ -19,8 +19,7 @@ mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, Li
         console.log resource
         console.log 'OK'), (response) -> console.log response
 
-  Task.index {},  ((resource) -> $scope.tasks = resource), (response) -> console.log response
-
+  Task.index {},  ((resource) -> $scope.tasks = resource)
 
   $scope.updateList = (data) ->
     console.log 'Update'
@@ -32,19 +31,24 @@ mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, Li
         console.log $scope._id
         Task.save {}, { _List: $scope._id, Description: item }, ((resource) -> $scope.tasks.push resource ), (response) -> console.log response
 
-  $scope.updateTask = (index) ->
+  $scope.updateTask = (index,data) ->
+    console.log "Test"
     task = $scope.tasks[index]
-    task.update {
-    }, ((resource) -> console.log resource), (response) -> console.log response
+    Task.update {_id: task._id }, data, ((resource) -> console.log resource), (response) -> console.log response
       # ajax success
 
-  $scope.deleteTask = (index) ->
+  $scope.destroyTask = (index) ->
     console.log 'Destroy'
     task = $scope.tasks[index]
-    task.destroy {}, ((resource) ->
+    Task.destroy {_id: task._id}, ((resource) ->
       # ajax success
       if not (index is -1)
         $scope.tasks.splice index, 1), (response) -> console.log response
+
+  $scope.toggleComplete = (idx) ->
+    task =  $scope.tasks[idx]
+    console.log task + idx
+    Task.update { _id: task._id } { Complete: task.Complete }
 
 
 angular.module 'app.controllers' [] .controller mod
