@@ -6,13 +6,14 @@ ProtoExample =
     DateTime: -> new Date
     Bool: -> false
     Text: -> ''
+    Ref: -> null
 
 
 class List
     -> @ <<< let @ = ProtoExample
         _id: @UUID!
-        _List$Previous: @UUID!
-        _List$Next: @UUID!
+        _List$Previous: @Ref!
+        _List$Next: @Ref!
         Owner: @EmailAddress!
         CreatedAt: @DateTime!
         LastCheckmarkAt: @DateTime!
@@ -22,7 +23,7 @@ class List
 class Task
     -> @ <<< let @ = ProtoExample
         _id: @UUID!
-        _List: @UUID!
+        _List: @Ref!
         Complete: @Bool!
         Description: @Text!
         CreatedAt: @DateTime!
