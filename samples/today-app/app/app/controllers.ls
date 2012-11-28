@@ -19,7 +19,7 @@ mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, Li
         console.log resource
         console.log 'OK'), (response) -> console.log response
 
-  Task.index {},  ((resource) -> $scope.tasks = resource)
+  Task.index {},  ((resource) -> $scope.tasks = resource), (response) -> console.log response
 
   $scope.updateList = (data) ->
     console.log 'Update'
