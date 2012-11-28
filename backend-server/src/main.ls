@@ -62,8 +62,9 @@ require! \fs
         @res.send 200 res.0[field]
 
     @post '/:appname/collections/:model': ->
-        object = new models[@params.model] <<< @body
-        memstore[@params.model].push object
+        m = models[@params.model] ?= null
+        object = if m => new m <<< @body else @body
+        memstore[][@params.model].push object
         @res.send 201 object
 
     @put '/:appname/collections/:model/_': ->

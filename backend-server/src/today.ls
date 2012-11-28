@@ -17,9 +17,9 @@ err, response, body <- request.put do
 console.log body
 
 err, response, ttt <- request.post do
-    uri: base + 'db/Today/collections/Task'
+    uri: base + 'db/Today/collections/Cafe'
     json: do
-        Description: \newthing
+        Name: \Perfetto
 console.log ttt
 
 err, response, [task] <- request.get do
