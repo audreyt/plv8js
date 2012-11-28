@@ -1,24 +1,40 @@
 models = {List, Task} = require \./model
-{select, ProtoList} = require \./eval
+{select} = require \./eval
 require! \fs
+
+modelmeta = do
+    List: do
+        tasks:              $from: \Task
+        tasksAddedAtStart:  $from: \Task $query: CreatedAt: $: \CreatedAt
+        tasksAddedAtLater:  $from: \Task $query: CreatedAt: $gt: $: \CreatedAt
+        completeTasks:      $from: \Task $query: { +Complete }
+        incompleteTasks:    $from: \Task $query: { -Complete }
+        isFinalized:        $: CreatedAt: $gt: $ago: 18hr * 3600s * 1000ms
 
 @include = ->
     @use \bodyParser, @app.router, @express.static __dirname + "/../_public"
 
     appname = 'Today'
-    modelmeta = { Task: {}, List: {}}
 
     memstore = try JSON.parse fs.readFileSync \dump.json \utf8
+    memmeta  = try JSON.parse fs.readFileSync \meta.json \utf8
 
-    l = new List <<< ProtoList
+    l = new List
     t = new Task <<< _List: l._id
     memstore ?= { Task: [t], List: [l] }
+
+    memmeta ?= modelmeta
 
     findOne = (model, id) ->
         [object] = memstore[model].filter -> it._id is id
         return object
 
     save = ->
+        fs.writeFileSync do
+            "meta.json"
+            JSON.stringify memmeta
+            \utf8
+
         fs.writeFileSync do
             "dump.json"
             JSON.stringify memstore
@@ -51,13 +67,13 @@ require! \fs
 
     @get '/:appname/collections/:model/:id': ->
         {id, model} = @params
-        res = select memstore, model, filter: -> it._id is id
+        res = select memmeta, memstore, model, filter: -> it._id is id
         return @res.send 404 {error: "No such ID"} unless res.length
         @res.send 200 res.0
 
     @get '/:appname/collections/:model/:id/:field': ->
         {id, model, field} = @params
-        res = select memstore, model, filter: -> it._id is id
+        res = select memmeta, memstore, model, filter: -> it._id is id
         return @res.send 404 {error: "No such ID"} unless res.length
         @res.send 200 res.0[field]
 
@@ -68,7 +84,7 @@ require! \fs
         @res.send 201 object
 
     @put '/:appname/collections/:model/_': ->
-        modelmeta[@params.model] = @body
+        memmeta[@params.model] = @body
         @res.send 200 @body
 
     @put '/:appname/collections/:model/:id': ->
@@ -83,7 +99,7 @@ require! \fs
 
     @get '/:appname/collections/:model': ->
         { q: query, c: count, f: fields, fo: firstOnly, s: sort, sk: skip, l: limit } = @query ? {}
-        @res.send 200 select memstore, @params.model, {
+        @res.send 200 select memmeta, memstore, @params.model, {
             query: try JSON.parse(query ? \null)
             count, fields, firstOnly, sort, skip, limit
         }
