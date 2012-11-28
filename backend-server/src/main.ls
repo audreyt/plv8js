@@ -37,6 +37,9 @@ require! \fs
             orig.call @, { ["/databases#k", v] for k, v of it }
             orig.call @, { ["/db#k", v] for k, v of it }
 
+    @get '/:appname/collections': ->
+        @res.send 200 [k for k of models]
+
     @get '/:appname/collections/:model/:id': ->
         @response.send 200 findOne ...@params<[model id]>
 
