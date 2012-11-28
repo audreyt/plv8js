@@ -24,8 +24,8 @@ require! \fs
             JSON.stringify memstore
             \utf8
 
-    @get '/': ->
-        @res.send 200 <[ db databases ]>
+#    @get '/': ->
+#        @res.send 200 <[ db databases ]>
 
     for verb in <[put post del]> => let orig = @[verb]
         @[verb] = ->
