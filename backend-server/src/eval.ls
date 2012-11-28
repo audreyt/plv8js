@@ -23,7 +23,9 @@ function select (table, filter)
         $ := it
         { [name, run.call(it, table, field) ] for name, field of it }
 
-function run (table, {$query, $from, $}:field) => switch
+function run (table, field) =>
+    {$query, $from, $} = field ? {}
+    switch
     | $from? => select $from, ~>
         ref = it["_#table"]
         return false if ref? and ref isnt @_id
@@ -47,7 +49,6 @@ function test (val, expr) => switch typeof expr
         switch op
             | \$gt =>
                 res = evaluate.call @, ref
-                console.log "Testing #val against #res"
                 return val > res
             | \$ =>
                 return val is $[ref]
