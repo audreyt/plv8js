@@ -1,29 +1,31 @@
 require! {uuid: 'uuid-pure'}
 
+ProtoExample =
+    UUID: -> uuid.newId!
+    EmailAddress: -> 'foo@foo.com'
+    DateTime: -> new Date
+    Bool: -> false
+    Text: -> ''
 
-UUID = -> uuid.newId!
 
-EmailAddress = -> 'foo@foo.com'
-DateTime = -> new Date
-Bool = -> false
-Text = -> ''
+class List implements ProtoExample
+    -> @ <<< do
+        _id: @UUID!
+        PreviousList: @UUID!
+        NextList: @UUID!
+        Owner: @EmailAddress!
+        CreatedAt: @DateTime!
+        LastCheckmarkAt: @DateTime!
+        CompletedAt: @DateTime!
+        FinalMailSent: @Bool!
 
-List = ->
-    _id: UUID!
-    PreviousList: UUID!
-    NextList: UUID!
-    Owner: EmailAddress!
-    CreatedAt: DateTime!
-    LastCheckmarkAt: DateTime!
-    CompletedAt: DateTime!
-    FinalMailSent: Bool!
-
-Task = ->
-    _id: UUID!
-    List: UUID!
-    Complete: Bool!
-    Description: Text!
-    CreatedAt: DateTime!
-    CompletedAt: DateTime!
+class Task implements ProtoExample
+    -> @ <<< do
+        _id: @UUID!
+        List: @UUID!
+        Complete: @Bool!
+        Description: @Text!
+        CreatedAt: @DateTime!
+        CompletedAt: @DateTime!
 
 module.exports = {List, Task}
