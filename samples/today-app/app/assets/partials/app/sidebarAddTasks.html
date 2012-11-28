@@ -2,13 +2,10 @@
 <div>Come up with something else? Just jot it down in the text area and click the button. Don't worry. it won't count against your stats for today.</div>
 
 <span class="add-items">
-<div class="hidden"><input type="hidden" name="J:A-today-do" id="J:A-today-do" value="Should::Action::CreateListItems"></div>
-  <input type="hidden" name="J:A:F:F-list_uuid-today-do" id="J:A:F:F-list_uuid-today-do-S2873929" value="79d9dff1-9cab-4323-a563-82d7eeccfbb9" class="widget argument-list_uuid">
-  <input type="hidden" name="J:A:F-list_uuid-today-do" id="J:A:F-list_uuid-today-do-S2883929" value="79d9dff1-9cab-4323-a563-82d7eeccfbb9" class="widget argument-list_uuid">
 <div class="control-group mandatory argument-content">
-<div class="controls"><textarea  rows="5" cols="60" class="widget argument-content" style="height: 90.5px;"></textarea>
+<div class="controls"><textarea  rows="5" cols="60" class="widget argument-content" ng-model="tasksToAdd" style="height: 90.5px;"></textarea>
 </div></div>
-<div class="controls"><input type="submit" value="Add" class="widget btn btn-primary button">
+<div class="controls"><input type="submit" value="Add" ng-click="addTasks(tasksToAdd)" class="widget btn btn-primary button">
 </div>
 
      </span>

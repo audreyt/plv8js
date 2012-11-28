@@ -3,7 +3,6 @@
     <div class="span8">
         <div ng-show="tasks.length">
             <ng-include src="'partials/app/listTasks.html'"></ng-include>
-            {{ tasks | json }}
         </div>
         <div ng-show="!tasks.length">
             <ng-include src="'partials/app/createTasks.html'"></ng-include>
