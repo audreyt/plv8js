@@ -13,6 +13,7 @@ const prefix = '/db/Today/collections'
     }
   .factory 'Task', <[$resource]> +++ ($resource) ->
     $resource prefix + '/Task/:_id', {_id: '@_id'}, {
+      index: { method: 'GET', isArray: true },
       create: {method: 'POST'}
       show: {method: 'GET'}
       update: {method: 'PUT'}

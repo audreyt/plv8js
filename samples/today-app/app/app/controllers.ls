@@ -3,23 +3,23 @@ mod = {}
 
 mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, List, Task, $location, $routeParams) ->
   $scope._id = $routeParams.listUuid
-  console.log "ID IS " +$scope._id
-  console.log $routeParams
+  $scope.tasks = []
   # Defined before we call it
   $scope.redirectToNewList = ->
-   List.create {}, (resource) -> $location.path '/list/' + resource._id , (response) -> console.log response
+     List.create {}, (resource) -> $location.path '/list/' + resource._id , (response) -> console.log response
 
   if ($routeParams.listUuid == "")
-            $scope.redirectToNewList!
+     $scope.redirectToNewList!
 
   if $scope._id
     $scope.list = List.get {_id: $scope._id}, ((resource) ->
         unless resource
             $scope.redirectToNewList!
+        $scope.tasks = resource.tasks || []
+        console.log resource
         console.log 'OK'), (response) -> console.log response
 
-
-  #$scope.tasks = $scope.list.tasks
+  Task.index {},  ((resource) -> $scope.tasks = resource), (response) -> console.log response
 
 
   $scope.updateList = (data) ->
@@ -30,7 +30,7 @@ mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, Li
      tasks = lines / /[\r\n]+/
      for item in tasks
         console.log $scope._id
-        Task.save {}, { _List: $scope._id, Description: item }, ((resource) -> console.log resource), (response) -> console.log response
+        Task.save {}, { _List: $scope._id, Description: item }, ((resource) -> $scope.tasks.push resource ), (response) -> console.log response
 
   $scope.updateTask = (index) ->
     task = $scope.tasks[index]

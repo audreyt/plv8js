@@ -1,18 +1,16 @@
 <h2>Tasks!</h2>
       <ul class="tasks">
-        <li ng-repeat="task in initialTasks" >
-        {{ task | json }}
-        <input class="toggle" type="checkbox" ng-model="task.done" ng-change="toggleDone(task.id)"/>
-        <input type="text" ng-model="task.description" ng:blur="update(task.id, {description: task.description } )">
+        <li ng-repeat="task in tasks" >
+        <input class="toggle" type="checkbox" ng-model="task.Complete" ng-change="toggleComplete(task._id)"/>
+        <input type="text" ng-model="task.Description" ng:blur="update(task._id, {Description: task.Description } )">
         <button ng-click="destroy($index)">Delete</button>
         </li>
       </ul>
 <h2>Tasks you added later...</h2>
       <ul class="tasks">
         <li ng-repeat="task in laterTasks" >
-        {{ task | json }}
-        <input class="toggle" type="checkbox" ng-model="task.done" ng-change="toggleDone(task.id)"/>
-        <input type="text" ng-model="task.description" ng:blur="update(task.id, {description: task.description } )">
+        <input class="toggle" type="checkbox" ng-model="task.Complete" ng-change="toggleComplete(task._id)"/>
+        <input type="text" ng-model="task.description" ng:blur="update(task._id, {description: task.description } )">
         <button ng-click="destroy($index)">Delete</button>
         </li>
       </ul>
