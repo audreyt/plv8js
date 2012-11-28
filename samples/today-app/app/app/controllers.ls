@@ -1,9 +1,26 @@
 mod = {}
 
 
-mod.ListController = <[$scope List Task $routeParams]> +++ ($scope, List, Task, $routeParams) ->
-  $scope.listUuid = $routeParams.listUuid
-  $scope.list = List.get {}, ((resource) -> console.log 'OK'), (response) ->
+mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, List, Task, $location, $routeParams) ->
+  $scope._id = $routeParams.listUuid
+  console.log "ID is: " +$scope._id
+  for k, v of $routeParams
+    console.log "#k #v"
+  console.log $routeParams.listUuid
+
+  $scope.redirectToNewList = ->
+   List.create {}, (resource) -> $location.path '/list/' + resource._id , (response) -> console.log response
+
+  if $scope._id
+    $scope.list = List.get {_id: $scope._id}, ((resource) ->
+          console.log "ID IS " + resource._id
+          console.log 'OK'), (response) ->
+              console.log "did not fetch ok!"
+              console.log response
+              $scope.redirectToNewList!
+  else
+    $scope.redirectToNewList!
+
   $scope.tasks = List.tasks
 
   $scope.createList = (data) ->
@@ -22,7 +39,8 @@ mod.ListController = <[$scope List Task $routeParams]> +++ ($scope, List, Task, 
   $scope.addTasks = (lines) ->
      tasks = lines / /[\r\n]+/
      for item in tasks
-        Task.save {}, { Description: item }, ((resource) -> console.log resource), (response) -> console.log response
+        console.log $scope._id
+        Task.save {}, { _List: $scope._id, Description: item }, ((resource) -> console.log resource), (response) -> console.log response
 
   $scope.updateTask = (index) ->
     task = $scope.tasks[index]
