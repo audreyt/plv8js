@@ -14,6 +14,8 @@ DB = {}
         @response.send 200 new Task.Create {_List: \fooo }
 
     @put '/database/:appname/collections/:model/:id': ->
+        if @params.id is \_
+            @response.send 200 \updatemodel
         @response.send 200 \notyet
 
     @del '/database/:appname/collections/:model/:id': ->
