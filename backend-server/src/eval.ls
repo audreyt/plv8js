@@ -10,23 +10,23 @@ ProtoList = do
 
 l = new List <<< ProtoList
 t = new Task <<< _List: l._id
-Collections = { List: [l], Task: [t] }
+C = { List: [l], Task: [t] }
 
-console.log select \List
+console.log select C, \List
 
 $ = null
 
-function select (table, filter)
-    rows = Collections[table]
+function select (db, table, filter)
+    rows = db[table]
     rows .=filter filter if filter
     rows.map ->
         $ := it
-        { [name, run.call(it, table, field) ] for name, field of it }
+        { [name, run.call(it, db, table, field) ] for name, field of it }
 
-function run (table, field) =>
+function run (db, table, field) =>
     {$query, $from, $} = field ? {}
     switch
-    | $from? => select $from, ~>
+    | $from? => select db, $from, ~>
         ref = it["_#table"]
         return false if ref? and ref isnt @_id
         return false if $query? and not cond.call it, $query
