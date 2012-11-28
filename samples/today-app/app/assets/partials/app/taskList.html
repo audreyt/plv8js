@@ -1,8 +1,0 @@
-      <ul class="tasks">
-        <li ng-repeat="task in tasks" >
-        {{ task | json }}
-        <input class="toggle" type="checkbox" ng-model="task.done" ng-change="toggleDone(task.id)"/>
-        <input type="text" ng-model="task.description" ng:blur="update(task.id, {description: task.description } )">
-        <button ng-click="destroy($index)">Delete</button>
-        </li>
-      </ul>

@@ -1,0 +1,16 @@
+    <h1>A list of tasks!</h1>
+<div class="row-fluid">
+    <div class="span8">
+        <div ng-show="tasks.length">
+            <ng-include src="'partials/app/listTasks.html'"></ng-include>
+            {{ tasks | json }}
+        </div>
+        <div ng-show="!tasks.length">
+            <ng-include src="'partials/app/createTasks.html'"></ng-include>
+        </div>
+
+    </div>
+    <div class="offset8 span4">
+        <ng-include src="'partials/app/listSidebar.html'"></ng-include>
+    </div>
+</div>
