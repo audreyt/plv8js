@@ -40,8 +40,8 @@ function run (db, table, field) =>
         | _                         => true
     | $? => cond.call @, $
     | $and? =>
-        for cond in $and
-            return false unless run.call @, db, table, cond
+        for clause in $and
+            return false unless run.call @, db, table, clause
         return true
     | _ => field
 
