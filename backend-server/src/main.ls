@@ -57,7 +57,7 @@ require! \fs
         memstore[@params.model].push object
         @res.send 201 object
 
-    @put '/:appname/collections/:model': ->
+    @put '/:appname/collections/:model/_': ->
         modelmeta[@params.model] = @body
         @res.send 200 @body
 

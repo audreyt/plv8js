@@ -12,7 +12,7 @@ ProtoList = do
 base = 'http://localhost:8888/'
 
 err, response, body <- request.put do
-    uri: base + 'db/Today/collections/List'
+    uri: base + 'db/Today/collections/List/_'
     json: ProtoList
 console.log body
 
