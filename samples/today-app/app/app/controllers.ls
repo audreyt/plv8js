@@ -2,35 +2,21 @@ mod = {}
 
 
 mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, List, Task, $location, $routeParams) ->
-  $scope._id = $routeParams.listUuid
-  console.log "ID is: " +$scope._id
-  for k, v of $routeParams
-    console.log "#k #v"
-  console.log $routeParams.listUuid
-
+  # Defined before we call it
   $scope.redirectToNewList = ->
    List.create {}, (resource) -> $location.path '/list/' + resource._id , (response) -> console.log response
 
+  $scope._id = $routeParams.listUuid
+
   if $scope._id
     $scope.list = List.get {_id: $scope._id}, ((resource) ->
-          console.log "ID IS " + resource._id
-          console.log 'OK'), (response) ->
-              console.log "did not fetch ok!"
-              console.log response
-              $scope.redirectToNewList!
-  else
-    $scope.redirectToNewList!
+          console.log 'OK'), (response) -> console.log response
 
-  $scope.tasks = List.tasks
+  if $scope.list == undefined
+       $scope.redirectToNewList!
 
-  $scope.createList = (data) ->
-    List.save {}, data, ((resource) ->
-      console.log resource
-      ),
-      ( (response) ->
-        $scope.listUuid = 'xxx'# XXX how do I get that back
-        console.log response
-      )
+  $scope.tasks = $scope.list.tasks
+
 
   $scope.updateList = (data) ->
     console.log 'Update'

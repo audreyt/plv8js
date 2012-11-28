@@ -3,8 +3,8 @@ App = angular.module \app <[ngCookies ngResource app.controllers app.directives 
 
 App.config <[$routeProvider $locationProvider]> +++ ($routeProvider, $locationProvider, config) ->
   $routeProvider
-    .when \/list/:listUuid templateUrl: \/partials/app/list.html
-    .when \/list/ templateUrl: \/partials/app/list.html
+    .when \/list/		   templateUrl: \/partials/app/list.html controller: \ListController
+    .when \/list/:listUuid templateUrl: \/partials/app/list.html controller: \ListController
     # Catch all
     .otherwise redirectTo: \/list
 
