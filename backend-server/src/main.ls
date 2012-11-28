@@ -64,7 +64,9 @@ require! \fs
             @response.send 200 object
 
     @del '/:appname/collections/:model/:id': ->
-        @response.send 200 \notyet
+        {id, model} = @params
+        memstore[model] = memstore[model].filter -> it._id isnt id
+        @response.send 201 null
 
     @get '/:appname/collections/:model': ->
         @response.send 200 select memstore, @params.model
