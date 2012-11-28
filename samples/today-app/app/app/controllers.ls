@@ -1,7 +1,7 @@
 ListController = ($scope, List, Task, $routeParams) ->
   $scope.listUuid = $routeParams.listUuid
   $scope.list = List.get {}, ((resource) -> console.log 'OK'), (response) ->
-  $scope.tasks = Tasks.index {}
+  $scope.tasks = Task.index {}
 
   $scope.createList = (data) ->
     List.save {}, data, ((resource) ->
