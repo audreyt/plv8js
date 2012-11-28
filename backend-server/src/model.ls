@@ -22,7 +22,7 @@ class List implements ProtoExample
 class Task implements ProtoExample
     -> @ <<< do
         _id: @UUID!
-        List: @UUID!
+        _List: @UUID!
         Complete: @Bool!
         Description: @Text!
         CreatedAt: @DateTime!
