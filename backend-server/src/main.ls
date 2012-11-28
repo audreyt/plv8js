@@ -83,13 +83,6 @@ modelmeta = do
         memstore[][@params.model].push object
         @res.send 201 object
 
-    @post '/:appname/collections/:model/:id/tasks': ->
-        m = models.Task ?= null
-        object = if m => new m <<< @body else @body
-        object["_#{ @params.model }"] ?= @params.id
-        memstore[][\Task].push object
-        @res.send 201 object
-
     @put '/:appname/collections/:model/_': ->
         memmeta[@params.model] = @body
         @res.send 200 @body
@@ -110,3 +103,24 @@ modelmeta = do
             query: try JSON.parse(query ? \null)
             count, fields, firstOnly, sort, skip, limit
         }
+
+    # CargoCulting, refactor later
+    @post '/:appname/collections/:model/:pid/tasks': ->
+        m = models.Task ?= null
+        object = if m => new m <<< @body else @body
+        object["_#{ @params.model }"] ?= @params.pid
+        memstore[][\Task].push object
+        @res.send 201 object
+
+    # CargoCulting, refactor later
+    @put '/:appname/collections/:model/:pid/tasks/:id': ->
+        object = findOne \Task @params.id
+        object <<< @body
+        @res.send 200 object
+
+    # CargoCulting, refactor later
+    @del '/:appname/collections/:model/:pid/tasks/:id': ->
+        {id} = @params
+        model = \Task
+        memstore[model] = memstore[model].filter -> it._id isnt id
+        @res.send 201 null
