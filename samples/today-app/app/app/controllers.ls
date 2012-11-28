@@ -4,7 +4,7 @@ mod = {}
 mod.ListController = <[$scope List Task $routeParams]> +++ ($scope, List, Task, $routeParams) ->
   $scope.listUuid = $routeParams.listUuid
   $scope.list = List.get {}, ((resource) -> console.log 'OK'), (response) ->
-  $scope.tasks = Task.index {}
+  $scope.tasks = List.tasks
 
   $scope.createList = (data) ->
     List.save {}, data, ((resource) ->
