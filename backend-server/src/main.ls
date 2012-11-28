@@ -5,7 +5,7 @@ require! \fs
 @include = ->
     @use \bodyParser, @app.router, @express.static __dirname + "/../_public"
 
-    @appname = 'Today'
+    appname = 'Today'
     modelmeta = { Task: {}, List: {}}
 
     memstore = try JSON.parse fs.readFileSync \dump.json \utf8
@@ -24,6 +24,9 @@ require! \fs
             JSON.stringify memstore
             \utf8
 
+    @get '/': ->
+        @res.send 200 <[ db databases ]>
+
     for verb in <[put post del]> => let orig = @[verb]
         @[verb] = ->
             wrapped = (ov) -> ->
@@ -36,6 +39,12 @@ require! \fs
             return orig.call @, ... unless typeof it is \object
             orig.call @, { ["/databases#k", v] for k, v of it }
             orig.call @, { ["/db#k", v] for k, v of it }
+
+    @get '': ->
+        @res.send 200 [appname]
+
+    @get '/:appname': ->
+        @res.send 200 { collections: [k for k of models] }
 
     @get '/:appname/collections': ->
         @res.send 200 [k for k of models]
