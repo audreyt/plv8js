@@ -8,12 +8,6 @@ ProtoList = do
     incompleteTasks:    $from: \Task $query: { -Complete }
     isFinalized:        $: CreatedAt: $gt: $ago: 18hr * 3600s * 1000ms
 
-l = new List <<< ProtoList
-t = new Task <<< _List: l._id
-C = { List: [l], Task: [t] }
-
-console.log select C, \List
-
 $ = null
 
 function select (db, table, filter)
@@ -63,3 +57,5 @@ function evaluate => switch typeof it
         | \$ago => new Date(Number(new Date) - res)
             where res = evaluate.call @, v
         | _ => continue
+
+module.exports = { select, ProtoList }
