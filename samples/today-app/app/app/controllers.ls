@@ -19,7 +19,7 @@ mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, Li
         console.log resource
         console.log 'OK'), (response) -> console.log response
 
-  Task.index {},  ((resource) -> $scope.tasks = resource), (response) -> console.log response
+  Task.index {_List: $scope._id},  ((resource) -> $scope.tasks = resource), (response) -> console.log response
 
   $scope.updateList = (data) ->
     console.log 'Update'
@@ -29,18 +29,18 @@ mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, Li
      tasks = lines / /[\r\n]+/
      for item in tasks
         console.log $scope._id
-        Task.save {}, { _List: $scope._id, Description: item }, ((resource) -> $scope.tasks.push resource ), (response) -> console.log response
+        Task.save {_List: $scope.list._id}, { _List: $scope._id, Description: item }, ((resource) -> $scope.tasks.push resource ), (response) -> console.log response
 
   $scope.updateTask = (index,data) ->
     console.log "Test"
     task = $scope.tasks[index]
-    Task.update {_id: task._id }, data, ((resource) -> console.log resource), (response) -> console.log response
+    Task.update {_id: task._id, _List: $scope.list._id }, data, ((resource) -> console.log resource), (response) -> console.log response
       # ajax success
 
   $scope.destroyTask = (index) ->
     console.log 'Destroy'
     task = $scope.tasks[index]
-    Task.destroy {_id: task._id}, ((resource) ->
+    Task.destroy {_id: task._id, _List: $scope.list._id}, ((resource) ->
       # ajax success
       if not (index is -1)
         $scope.tasks.splice index, 1), (response) -> console.log response
@@ -48,7 +48,7 @@ mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, Li
   $scope.toggleComplete = (idx) ->
     task =  $scope.tasks[idx]
     console.log task + idx
-    Task.update { _id: task._id } { Complete: task.Complete }
+    Task.update { _id: task._id, _List: $scope.list._id } { Complete: task.Complete }
 
 
 angular.module 'app.controllers' [] .controller mod
