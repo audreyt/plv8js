@@ -13,9 +13,13 @@ base = 'http://localhost:8888/'
 
 id = \md6u_TFmj0QK-0K-1SzG-P
 
+err, response, [task] <- request.get do
+    uri: base + 'database/Today/collections/Task'
+    json: true
+
 err, response, body <- request.put do
-    uri: base + 'database/Today/collections/Task/' + id
-    json: Description: \fooobar
+    uri: base + 'database/Today/collections/Task/' + task._id
+    json: { Description: \foo }
 console.log body
 #err, response, body <- request.put do
 #    uri: base + 'database/Today/collections/List/_'
