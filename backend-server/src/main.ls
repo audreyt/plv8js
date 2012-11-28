@@ -46,16 +46,16 @@ require! \fs
     @post '/:appname/collections/:model': ->
         object = new models[@params.model] <<< @body
         memstore[@params.model].push object
-        @response.send 201 object
+        @res.send 201 object
+
+    @put '/:appname/collections/:model': ->
+        modelmeta[@params.model] = @body
+        @res.send 200 @body
 
     @put '/:appname/collections/:model/:id': ->
-        if @params.id is \_
-            modelmeta[@params.model] = @body
-            @response.send 200 @body
-        else
-            object = findOne ...@params<[model id]>
-            object <<< @body
-            @response.send 200 object
+        object = findOne ...@params<[model id]>
+        object <<< @body
+        @res.send 200 object
 
     @del '/:appname/collections/:model/:id': ->
         @response.send 200 \notyet
