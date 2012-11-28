@@ -1,31 +1,36 @@
-mod = {}
+ListController = ($scope, List, Task, $routeParams) ->
+  $scope.listUuid = $routeParams.listUuid
+  $scope.list = List.get {}, ((resource) -> console.log 'OK'), (response) ->
+  $scope.tasks = Tasks.index {}
 
-mod.AppCtrl = <[$scope $location $resource $rootScope]> +++ (s, $location, $resource, $rootScope) ->
+  $scope.createList = (data) ->
+    List.save {}, data, ((resource) ->
+      console.log resource
+      ),
+      ( (response) ->
+        $scope.listUuid = 'xxx'# XXX how do I get that back
+        console.log response
+      )
 
-  # Uses the url to determine if the selected
-  # menu item should have the class active.
-  s <<< {$location}
-  s.$watch '$location.path()' (activeNavId or '/') ->
-    s <<< {activeNavId}
+  $scope.updateList = (data) ->
+    console.log 'Update'
+    List.update {}, data, ((resource) -> console.log resource), (response) -> console.log response
 
-  # getClass compares the current url with the id.
-  # If the current url starts with the id it returns 'active'
-  # otherwise it will return '' an empty string. E.g.
-  #
-  #   # current url = '/products/1'
-  #   getClass('/products') # returns 'active'
-  #   getClass('/orders') # returns ''
-  #
-  s.getClass = (id) ->
-    if s.activeNavId.substring 0 id.length is id
-      'active'
-    else
-      ''
+  $scope.addTasks = ->
+    # split the data by newline
+      # create one task each
+        Task.save { listUuid: $scope.listUuid}, taskData, ((resource) -> console.log resource), (response) -> console.log response
 
-mod.MyCtrl1 = <[$scope]> +++ (s) ->
-  s.Title = "MyCtrl1"
+  $scope.updateTask = (index) ->
+    task = $scope.tasks[index]
+    task.update {
+    }, ((resource) -> console.log resource), (response) -> console.log response
+      # ajax success
 
-mod.MyCtrl2 = <[$scope]> +++ (s) ->
-  s.Title = "MyCtrl2"
-
-angular.module 'app.controllers' [] .controller mod
+  $scope.deleteTask = (index) ->
+    console.log 'Destroy'
+    task = $scope.tasks[index]
+    task.destroy {}, ((resource) ->
+      # ajax success
+      if not (index is -1)
+        $scope.tasks.splice index, 1), (response) -> console.log response
