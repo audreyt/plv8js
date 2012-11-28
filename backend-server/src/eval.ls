@@ -3,7 +3,7 @@
 
 $ = null
 
-function select (meta, db, table, { filter, query, count, fields, firstOnly, sort, skip, limit }={})
+function select (meta, db, table, { _recurse, filter, query, count, fields, firstOnly, sort, skip, limit }={})
     rows = db[table]
     proto = meta[table] ? {}
     console.log table, proto
@@ -11,11 +11,10 @@ function select (meta, db, table, { filter, query, count, fields, firstOnly, sor
     rows .=filter(-> cond.call it, query) if query
     rows .=map ->
         it <<< proto
-        console.log it
-        $ := it
+        $ := it unless _recurse
         { [name, run.call(
             $, meta, db, table, it[name], console.log name, it[name]
-        ) ] for name of $ }
+        ) ] for name of it }
     switch
     | count     => { count: rows.length }
     | firstOnly => rows.0
@@ -25,15 +24,16 @@ function select (meta, db, table, { filter, query, count, fields, firstOnly, sor
     | limit     => rows[til limit]
     | _         => rows
 
-function run (meta, db, table, field) =>
+function run (meta, db, table, field)
     {$query, $from, $and, $} = field ? {}
+    id = @_id
     switch
-    | $from? => select meta, db, $from, filter: ~>
+    | $from? => select meta, db, $from, { +_recurse, filter: ->
         ref = it["_#table"]
-        switch
-        | ref? and ref isnt @_id    => false
-        | $query?                   => cond.call it, $query
-        | _                         => true
+        return false if ref? and ref isnt id
+        return false if $query? and not cond.call it, $query
+        return true
+    }
     | $? => cond.call @, $
     | $and? =>
         for clause in $and
