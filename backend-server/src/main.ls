@@ -1,8 +1,6 @@
-DB = {}
-
 models = {List, Task} = require \./model
-
 {select, ProtoList} = require \./eval
+require! \fs
 
 @include = ->
     @use \bodyParser, @app.router, @express.static __dirname
@@ -10,13 +8,28 @@ models = {List, Task} = require \./model
     @appname = 'Today'
     modelmeta = { Task: {}, List: {}}
 
+    memstore = try JSON.parse fs.readFileSync \dump.json \utf8
+
     l = new List <<< ProtoList
     t = new Task <<< _List: l._id
-    memstore = { Task: [t], List: [l] }
+    memstore ?= { Task: [t], List: [l] }
 
     findOne = (model, id) ->
         [object] = memstore[model].filter -> it._id is id
         return object
+
+    save = ->
+        fs.writeFileSync do
+            "dump.json"
+            JSON.stringify memstore
+            \utf8
+
+    for verb in <[put post del]> => let orig = @[verb]
+        @[verb] = ->
+            wrapped = (ov) -> ->
+                ov.call @, ...
+                save!
+            orig.call @, { [k, wrapped v] for k, v of it }
 
     @get '/database/:appname/collections/:model/:id': ->
         @response.send 200 findOne ...@params<[model id]>
