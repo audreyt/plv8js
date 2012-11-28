@@ -1,6 +1,6 @@
 DB = {}
 
-{List, Task} = require \./model
+models = {List, Task} = require \./model
 
 {select, ProtoList} = require \./eval
 
@@ -22,7 +22,9 @@ DB = {}
         @response.send 200 findOne ...@params<[model id]>
 
     @post '/database/:appname/collections/:model': ->
-        @response.send 200 new Task.Create {_List: \fooo }
+        object = new models[@params.model] <<< @body
+        memstore[@params.model].push object
+        @response.send 201 object
 
     @put '/database/:appname/collections/:model/:id': ->
         if @params.id is \_
