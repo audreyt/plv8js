@@ -51,13 +51,13 @@ require! \fs
 
     @get '/:appname/collections/:model/:id': ->
         {id, model} = @params
-        res = select memstore, model, -> it._id is id
+        res = select memstore, model, filter: -> it._id is id
         return @res.send 404 {error: "No such ID"} unless res.length
         @res.send 200 res.0
 
     @get '/:appname/collections/:model/:id/:field': ->
         {id, model, field} = @params
-        res = select memstore, model, -> it._id is id
+        res = select memstore, model, filter: -> it._id is id
         return @res.send 404 {error: "No such ID"} unless res.length
         @res.send 200 res.0[field]
 
@@ -82,4 +82,8 @@ require! \fs
         @res.send 201 null
 
     @get '/:appname/collections/:model': ->
-        @res.send 200 select memstore, @params.model
+        { q: query, c: count, f: fields, fo: firstOnly, s: sort, sk: skip, l: limit } = @query ? {}
+        @res.send 200 select memstore, @params.model, {
+            query: try JSON.parse(query ? \null)
+            count, fields, firstOnly, sort, skip, limit
+        }

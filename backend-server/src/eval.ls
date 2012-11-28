@@ -11,22 +11,38 @@ ProtoList = do
 
 $ = null
 
-function select (db, table, filter)
+function select (db, table, { filter, query, count, fields, firstOnly, sort, skip, limit }={})
     rows = db[table]
     rows .=filter filter if filter
-    rows.map ->
+    rows .=filter(-> cond.call it, query) if query
+    rows .=map ->
         $ := it
-        { [name, run.call(it, db, table, field) ] for name, field of it }
+        { [name, run.call(
+            it, db, table, field
+        ) ] for name, field of it }
+    switch
+    | count     => { count: rows.length }
+    | firstOnly => rows.0
+    | fields    => throw "Not implemented: f"
+    | sort      => throw "Not implemented: sort"
+    | skip      => rows[skip til skip+limit]
+    | limit     => rows[til limit]
+    | _         => rows
 
 function run (db, table, field) =>
-    {$query, $from, $} = field ? {}
+    {$query, $from, $and, $} = field ? {}
     switch
-    | $from? => select db, $from, ~>
+    | $from? => select db, $from, filter: ~>
         ref = it["_#table"]
-        return false if ref? and ref isnt @_id
-        return false if $query? and not cond.call it, $query
-        return true
+        switch
+        | ref? and ref isnt @_id    => false
+        | $query?                   => cond.call it, $query
+        | _                         => true
     | $? => cond.call @, $
+    | $and? =>
+        for cond in $and
+            return false unless run.call @, db, table, cond
+        return true
     | _ => field
 
 function cond => switch typeof it
@@ -34,6 +50,7 @@ function cond => switch typeof it
     | \object =>
         # Implicit AND on all k,v
         for k, v of it
+            console.log "Testing #k against #v"
             return false unless test.call @, @[k], v
         true
     | _ => it
