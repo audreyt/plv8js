@@ -8,19 +8,19 @@ ProtoExample =
     Text: -> ''
 
 
-class List implements ProtoExample
-    -> @ <<< do
+class List
+    -> @ <<< let @ = ProtoExample
         _id: @UUID!
-        PreviousList: @UUID!
-        NextList: @UUID!
+        _List$Previous: @UUID!
+        _List$Next: @UUID!
         Owner: @EmailAddress!
         CreatedAt: @DateTime!
         LastCheckmarkAt: @DateTime!
         CompletedAt: @DateTime!
         FinalMailSent: @Bool!
 
-class Task implements ProtoExample
-    -> @ <<< do
+class Task
+    -> @ <<< let @ = ProtoExample
         _id: @UUID!
         _List: @UUID!
         Complete: @Bool!
