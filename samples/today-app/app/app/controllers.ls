@@ -2,20 +2,24 @@ mod = {}
 
 
 mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, List, Task, $location, $routeParams) ->
+  $scope._id = $routeParams.listUuid
+  console.log "ID IS " +$scope._id
+  console.log $routeParams
   # Defined before we call it
   $scope.redirectToNewList = ->
    List.create {}, (resource) -> $location.path '/list/' + resource._id , (response) -> console.log response
 
-  $scope._id = $routeParams.listUuid
+  if ($routeParams.listUuid == "")
+            $scope.redirectToNewList!
 
   if $scope._id
     $scope.list = List.get {_id: $scope._id}, ((resource) ->
-          console.log 'OK'), (response) -> console.log response
+        unless resource
+            $scope.redirectToNewList!
+        console.log 'OK'), (response) -> console.log response
 
-  if $scope.list == undefined
-       $scope.redirectToNewList!
 
-  $scope.tasks = $scope.list.tasks
+  #$scope.tasks = $scope.list.tasks
 
 
   $scope.updateList = (data) ->
