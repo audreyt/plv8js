@@ -20,9 +20,7 @@ mod.ListController = <[$scope List Task $routeParams]> +++ ($scope, List, Task, 
     List.update {}, data, ((resource) -> console.log resource), (response) -> console.log response
 
   $scope.addTasks = (lines) ->
-      tasks = lines / /[\r\n]+/
-      # split the data by newline
-      # create one task each
+     tasks = lines / /[\r\n]+/
      for item in tasks
         Task.save {}, { Description: item }, ((resource) -> console.log resource), (response) -> console.log response
 
