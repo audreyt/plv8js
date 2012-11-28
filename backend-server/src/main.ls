@@ -41,7 +41,7 @@ require! \fs
         @res.send 200 [k for k of models]
 
     @get '/:appname/collections/:model/:id': ->
-        @response.send 200 findOne ...@params<[model id]>
+        @res.send 200 findOne ...@params<[model id]>
 
     @post '/:appname/collections/:model': ->
         object = new models[@params.model] <<< @body
@@ -58,7 +58,7 @@ require! \fs
         @res.send 200 object
 
     @del '/:appname/collections/:model/:id': ->
-        @response.send 200 \notyet
+        @res.send 200 \notyet
 
     @get '/:appname/collections/:model': ->
-        @response.send 200 select memstore, @params.model
+        @res.send 200 select memstore, @params.model
