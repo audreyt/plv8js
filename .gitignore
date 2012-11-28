@@ -1,0 +1,13 @@
+node_modules/
+backend-server/lib
+frontend-server/lib
+*.o
+*.so
+livescript.cc
+coffee-script.cc
+*.swp
+*.control
+*.sql
+plv8_config.h
+samples/today-app/app/assets/*html
+samples/today-app/app/assets/partials
