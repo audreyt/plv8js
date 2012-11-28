@@ -11,20 +11,18 @@ ProtoList = do
 
 base = 'http://localhost:8888/'
 
-id = \md6u_TFmj0QK-0K-1SzG-P
-
 err, response, ttt <- request.post do
-    uri: base + 'database/Today/collections/Task'
+    uri: base + 'db/Today/collections/Task'
     json: do
         Description: \newthing
 console.log ttt
 
 err, response, [task] <- request.get do
-    uri: base + 'database/Today/collections/Task'
+    uri: base + 'db/Today/collections/Task'
     json: true
 
 err, response, body <- request.put do
-    uri: base + 'database/Today/collections/Task/' + task._id
+    uri: base + 'db/Today/collections/Task/' + task._id
     json: { Description: \foo }
 console.log body
 #err, response, body <- request.put do
