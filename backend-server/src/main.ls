@@ -31,15 +31,21 @@ require! \fs
                 save!
             orig.call @, { [k, wrapped v] for k, v of it }
 
-    @get '/database/:appname/collections/:model/:id': ->
+    for verb in <[get put post del]> => let orig = @[verb]
+        @[verb] = ->
+            return orig.call @, ... unless typeof it is \object
+            orig.call @, { ["/databases#k", v] for k, v of it }
+            orig.call @, { ["/db#k", v] for k, v of it }
+
+    @get '/:appname/collections/:model/:id': ->
         @response.send 200 findOne ...@params<[model id]>
 
-    @post '/database/:appname/collections/:model': ->
+    @post '/:appname/collections/:model': ->
         object = new models[@params.model] <<< @body
         memstore[@params.model].push object
         @response.send 201 object
 
-    @put '/database/:appname/collections/:model/:id': ->
+    @put '/:appname/collections/:model/:id': ->
         if @params.id is \_
             modelmeta[@params.model] = @body
             @response.send 200 @body
@@ -48,8 +54,8 @@ require! \fs
             object <<< @body
             @response.send 200 object
 
-    @del '/database/:appname/collections/:model/:id': ->
+    @del '/:appname/collections/:model/:id': ->
         @response.send 200 \notyet
 
-    @get '/database/:appname/collections/:model': ->
+    @get '/:appname/collections/:model': ->
         @response.send 200 select memstore, @params.model
