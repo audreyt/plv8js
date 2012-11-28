@@ -6,6 +6,8 @@ DB = {}
     @use \bodyParser, @app.router, @express.static __dirname
 
     @appname = 'Today'
+    modelmeta = { Task: {}, List: {}}
+    memstore = { Task: [], List: [] }
 
     @get '/database/:appname/collections/:model/:id': ->
         @response.send 200 new Task {_id: @params.id }
@@ -15,8 +17,10 @@ DB = {}
 
     @put '/database/:appname/collections/:model/:id': ->
         if @params.id is \_
-            @response.send 200 \updatemodel
-        @response.send 200 \notyet
+            modelmeta[@params.model] = @body
+            @response.send 200 @body
+        else
+            @response.send 200 \notyet
 
     @del '/database/:appname/collections/:model/:id': ->
         @response.send 200 \notyet
