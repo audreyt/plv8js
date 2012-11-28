@@ -3,7 +3,7 @@ models = {List, Task} = require \./model
 require! \fs
 
 @include = ->
-    @use \bodyParser, @app.router, @express.static __dirname
+    @use \bodyParser, @app.router, @express.static __dirname + "/../_public"
 
     @appname = 'Today'
     modelmeta = { Task: {}, List: {}}
