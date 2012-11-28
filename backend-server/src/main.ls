@@ -5,8 +5,19 @@ DB = {}
 @include = ->
     @use \bodyParser, @app.router, @express.static __dirname
 
-    @get '/database/Today/collections/:model/:id': ->
-        @response.send 200 new Task!
+    @appname = 'Today'
 
-# list
-#    @get '/database/Today/collections/:model': ->
+    @get '/database/:appname/collections/:model/:id': ->
+        @response.send 200 new Task {_id: @params.id }
+
+    @post '/database/:appname/collections/:model': ->
+        @response.send 200 new Task.Create {_List: \fooo }
+
+    @put '/database/:appname/collections/:model/:id': ->
+        @response.send 200 \notyet
+
+    @del '/database/:appname/collections/:model/:id': ->
+        @response.send 200 \notyet
+
+    @get '/database/:appname/collections/:model': ->
+        @response.send 200 \notyet

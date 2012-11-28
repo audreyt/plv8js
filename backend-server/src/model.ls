@@ -27,5 +27,7 @@ class Task implements ProtoExample
         Description: @Text!
         CreatedAt: @DateTime!
         CompletedAt: @DateTime!
+    class @Create
+        (args) -> @ <<< args
 
 module.exports = {List, Task}
