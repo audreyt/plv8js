@@ -83,6 +83,13 @@ modelmeta = do
         memstore[][@params.model].push object
         @res.send 201 object
 
+    @post '/:appname/collections/:model/:id/tasks': ->
+        m = models.Task ?= null
+        object = if m => new m <<< @body else @body
+        object["_#{ @params.model }"] ?= @params.id
+        memstore[][\Task].push object
+        @res.send 201 object
+
     @put '/:appname/collections/:model/_': ->
         memmeta[@params.model] = @body
         @res.send 200 @body
