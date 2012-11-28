@@ -14,8 +14,12 @@ DB = {}
     t = new Task <<< _List: l._id
     memstore = { Task: [t], List: [l] }
 
+    findOne = (model, id) ->
+        [object] = memstore[model].filter -> it._id is id
+        return object
+
     @get '/database/:appname/collections/:model/:id': ->
-        @response.send 200 new Task {_id: @params.id }
+        @response.send 200 findOne ...@params<[model id]>
 
     @post '/database/:appname/collections/:model': ->
         @response.send 200 new Task.Create {_List: \fooo }
@@ -25,7 +29,9 @@ DB = {}
             modelmeta[@params.model] = @body
             @response.send 200 @body
         else
-            @response.send 200 \notyet
+            object = findOne ...@params<[model id]>
+            object <<< @body
+            @response.send 200 object
 
     @del '/database/:appname/collections/:model/:id': ->
         @response.send 200 \notyet

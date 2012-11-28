@@ -11,8 +11,14 @@ ProtoList = do
 
 base = 'http://localhost:8888/'
 
+id = \md6u_TFmj0QK-0K-1SzG-P
+
 err, response, body <- request.put do
-    uri: base + 'database/Today/collections/List/_'
-    json: ProtoList
+    uri: base + 'database/Today/collections/Task/' + id
+    json: Description: \fooobar
 console.log body
+#err, response, body <- request.put do
+#    uri: base + 'database/Today/collections/List/_'
+#    json: ProtoList
+#console.log body
 
