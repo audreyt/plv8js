@@ -38,7 +38,16 @@ require! \fs
             orig.call @, { ["/db#k", v] for k, v of it }
 
     @get '/:appname/collections/:model/:id': ->
-        @response.send 200 findOne ...@params<[model id]>
+        {id, model} = @params
+        res = select memstore, model, -> it._id is id
+        return @response.send 404 {error: "No such ID"} unless res.length
+        @response.send 200 res.0
+
+    @get '/:appname/collections/:model/:id/:field': ->
+        {id, model, field} = @params
+        res = select memstore, model, -> it._id is id
+        return @response.send 404 {error: "No such ID"} unless res.length
+        @response.send 200 res.0[field]
 
     @post '/:appname/collections/:model': ->
         object = new models[@params.model] <<< @body
