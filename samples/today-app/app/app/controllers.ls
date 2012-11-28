@@ -1,4 +1,7 @@
-ListController = ($scope, List, Task, $routeParams) ->
+mod = {}
+
+
+mod.ListController = <[$scope List Task $routeParams]> +++ ($scope, List, Task, $routeParams) ->
   $scope.listUuid = $routeParams.listUuid
   $scope.list = List.get {}, ((resource) -> console.log 'OK'), (response) ->
   $scope.tasks = Task.index {}
@@ -34,3 +37,6 @@ ListController = ($scope, List, Task, $routeParams) ->
       # ajax success
       if not (index is -1)
         $scope.tasks.splice index, 1), (response) -> console.log response
+
+
+angular.module 'app.controllers' [] .controller mod
