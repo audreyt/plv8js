@@ -21,26 +21,27 @@ mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, Li
 
   Task.index {_List: $scope._id},  ((resource) -> $scope.tasks = resource), (response) -> console.log response
 
-  $scope.initialTasksCompletePercentage = ->
+  $scope <<< do
+    initialTasksCompletePercentage: ->
       100 * ( $scope.initialTasksComplete!length / $scope.initialTasks!length)
 
-  $scope.initialTasks = ->
+    initialTasks: ->
       $scope.tasks.filter -> !it.AddedLater
 
-  $scope.initialTasksComplete = ->
+    initialTasksComplete: ->
       $scope.tasks.filter -> it.Complete and !it.AddedLater
-  $scope.laterTasksComplete = ->
+
+    laterTasksComplete: ->
       $scope.tasks.filter -> it.Complete and it.AddedLater
 
-  $scope.tTasksComplete = ->
+    tTasksComplete: ->
       $scope.tasks.filter -> it.Complete
-  
-  
-  $scope.updateList = (data) ->
-    console.log 'Update'
-    List.update {}, data, ((resource) -> console.log resource), (response) -> console.log response
 
-  $scope.addTasks = (lines) ->
+    updateList: (data) ->
+      console.log 'Update'
+      List.update {}, data, ((resource) -> console.log resource), (response) -> console.log response
+
+    addTasks: (lines) ->
 
      isLater = !!$scope.tasks.length
 
@@ -48,17 +49,17 @@ mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, Li
         console.log $scope._id
         Task.save {_List: $scope.list._id}, { _List: $scope._id, Description: item, AddedLater: isLater }, ((resource) -> $scope.tasks.push resource ), (response) -> console.log response
 
-  $scope.updateTask = (task,data) ->
-    console.log "Test"
-    Task.update {_id: task._id, _List: $scope.list._id }, data, ((resource) -> console.log resource), (response) -> console.log response
+    updateTask: (task,data) ->
+      console.log "Test"
+      Task.update {_id: task._id, _List: $scope.list._id }, data, ((resource) -> console.log resource), (response) -> console.log response
       # ajax success
 
-  $scope.destroyTask = (task) ->
-    console.log 'Destroy'
-    Task.destroy {_id: task._id, _List: $scope.list._id}, ((resource) -> $scope.tasks .=filter -> it isnt task)
+    destroyTask: (task) ->
+      console.log 'Destroy'
+      Task.destroy {_id: task._id, _List: $scope.list._id}, ((resource) -> $scope.tasks .=filter -> it isnt task)
 
-  $scope.toggleComplete = (task) ->
-    Task.update { _id: task._id, _List: $scope.list._id } { Complete: task.Complete }
+    toggleComplete: (task) ->
+      Task.update { _id: task._id, _List: $scope.list._id } { Complete: task.Complete }
 
 
 angular.module 'app.controllers' [] .controller mod
