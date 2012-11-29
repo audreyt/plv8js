@@ -2,7 +2,7 @@
       <ul class="tasks">
           <li ng-repeat="task in tasks | filter:{AddedLater: false }" >
         <input class="toggle" type="checkbox" ng-model="task.Complete" ng-change="toggleComplete(task)"/>
-        <input type="text" ng-model="task.Description" ng-change="updateTask(task, {Description: task.Description } )">
+        <input type="text" ng-model="task.Description" ng-blur="updateTask(task, {Description: task.Description } )">
         <button ng-click="destroyTask(task)">Delete</button>
         </li>
       </ul>
@@ -11,7 +11,7 @@
           <li ng-repeat="task in tasks | filter:{AddedLater: true }" >
         <input class="toggle" type="checkbox" ng-model="task.Complete"
         ng-change="toggleComplete(task)"/>
-        <input type="text" ng-model="task.Description" ng-change="updateTask(task, {Description: task.Description } )">
+        <input type="text" ng-model="task.Description" ng-blur="updateTask(task, {Description: task.Description } )">
         <button ng-click="destroyTask(task)">Delete</button>
         </li>
       </ul>

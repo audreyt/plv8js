@@ -2,6 +2,7 @@
       <h2 class="email">Email address</h2>
 
     <span class="editable-wrapper"><input class="oneline editable lists
-        email_to" ng-model="list.Owner" placeholder="jesse@example.com" value=""><i class="icon-pencil edit-status"></i></span>
+        email_to" ng-model="list.Owner" placeholder="jesse@example.com" value=""
+        ng:blur="updateList({Owner: list.Owner})"><i class="icon-pencil edit-status"></i></span>
       <div class="instructions">Today uses your email address to send you a link to this list now and a final copy at the end of the day.</div>
 </div>
