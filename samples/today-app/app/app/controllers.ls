@@ -21,6 +21,21 @@ mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, Li
 
   Task.index {_List: $scope._id},  ((resource) -> $scope.tasks = resource), (response) -> console.log response
 
+  $scope.initialTasksCompletePercentage = ->
+      100 * ( $scope.initialTasksComplete().length / $scope.initialTasks().length)
+
+  $scope.initialTasks = ->
+      $scope.tasks.filter -> !it.AddedLater
+
+  $scope.initialTasksComplete = ->
+      $scope.tasks.filter -> it.Complete and !it.AddedLater
+  $scope.laterTasksComplete = ->
+      $scope.tasks.filter -> it.Complete and it.AddedLater
+
+  $scope.tTasksComplete = ->
+      $scope.tasks.filter -> it.Complete
+  
+  
   $scope.updateList = (data) ->
     console.log 'Update'
     List.update {}, data, ((resource) -> console.log resource), (response) -> console.log response
