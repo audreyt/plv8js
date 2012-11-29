@@ -27,10 +27,10 @@ mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, Li
 
   $scope.addTasks = (lines) ->
 
-     if $scope.tasks.length 
-         isLater = true 
+     isLater = if $scope.tasks.length 
+         true 
      else 
-         isLater=false
+         false
 
      tasks = lines / /[\r\n]+/
      for item in tasks
