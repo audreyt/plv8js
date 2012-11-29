@@ -26,28 +26,27 @@ mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, Li
     List.update {}, data, ((resource) -> console.log resource), (response) -> console.log response
 
   $scope.addTasks = (lines) ->
+
+     if $scope.tasks.length 
+         isLater = true 
+     else 
+         isLater=false
+
      tasks = lines / /[\r\n]+/
      for item in tasks
         console.log $scope._id
-        Task.save {_List: $scope.list._id}, { _List: $scope._id, Description: item }, ((resource) -> $scope.tasks.push resource ), (response) -> console.log response
+        Task.save {_List: $scope.list._id}, { _List: $scope._id, Description: item, AddedLater: isLater }, ((resource) -> $scope.tasks.push resource ), (response) -> console.log response
 
-  $scope.updateTask = (index,data) ->
+  $scope.updateTask = (task,data) ->
     console.log "Test"
-    task = $scope.tasks[index]
     Task.update {_id: task._id, _List: $scope.list._id }, data, ((resource) -> console.log resource), (response) -> console.log response
       # ajax success
 
-  $scope.destroyTask = (index) ->
+  $scope.destroyTask = (task) ->
     console.log 'Destroy'
-    task = $scope.tasks[index]
-    Task.destroy {_id: task._id, _List: $scope.list._id}, ((resource) ->
-      # ajax success
-      if not (index is -1)
-        $scope.tasks.splice index, 1), (response) -> console.log response
+    Task.destroy {_id: task._id, _List: $scope.list._id}, ((resource) -> $scope.tasks .=filter -> it isnt task)
 
-  $scope.toggleComplete = (idx) ->
-    task =  $scope.tasks[idx]
-    console.log task + idx
+  $scope.toggleComplete = (task) ->
     Task.update { _id: task._id, _List: $scope.list._id } { Complete: task.Complete }
 
 

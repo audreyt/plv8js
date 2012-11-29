@@ -2,6 +2,9 @@
      <div class="instructions">Type in one item per line.
       <b>If you think a task might take more than twenty minutes, split it into a few parts.</b>
      </div>
-<textarea ng-model="newTasks"></textarea>
-<div class="controls"><input type="submit" ng-click="createTasks" value="Time to get going!" class="widget btn btn-primary button">
+<div class="controls"><textarea  rows="5" cols="60" class="widget argument-content" ng-model="initialTasksToAdd"></textarea>
+</div></div>
+<div class="controls"><input type="submit" value="Add" ng-click="addTasks(initialTasksToAdd); initialTasksToAdd=''" class="widget btn btn-primary button">
+</div>
+
     </span>
