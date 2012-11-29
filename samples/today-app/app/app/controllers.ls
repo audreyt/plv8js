@@ -22,7 +22,7 @@ mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, Li
   Task.index {_List: $scope._id},  ((resource) -> $scope.tasks = resource), (response) -> console.log response
 
   $scope.initialTasksCompletePercentage = ->
-      100 * ( $scope.initialTasksComplete().length / $scope.initialTasks().length)
+      100 * ( $scope.initialTasksComplete!length / $scope.initialTasks!length)
 
   $scope.initialTasks = ->
       $scope.tasks.filter -> !it.AddedLater
@@ -42,13 +42,9 @@ mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, Li
 
   $scope.addTasks = (lines) ->
 
-     isLater = if $scope.tasks.length 
-         true 
-     else 
-         false
+     isLater = !!$scope.tasks.length
 
-     tasks = lines / /[\r\n]+/
-     for item in tasks
+     for item in lines / /[\r\n]+/
         console.log $scope._id
         Task.save {_List: $scope.list._id}, { _List: $scope._id, Description: item, AddedLater: isLater }, ((resource) -> $scope.tasks.push resource ), (response) -> console.log response
 
