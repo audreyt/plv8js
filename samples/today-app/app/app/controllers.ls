@@ -25,11 +25,10 @@ mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, Li
     laterTasksComplete: ->
       $scope.tasks.filter -> it.Complete and it.AddedLater
 
-    tTasksComplete: ->
+    tasksComplete: ->
       $scope.tasks.filter -> it.Complete
 
     addTasks: (lines) ->
-
      isLater = !!$scope.tasks.length
 
      for item in lines / /[\r\n]+/
