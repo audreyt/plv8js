@@ -9,7 +9,7 @@ repository:
 dependencies:
   zappajs: \0.4.x
   nodemon: \*
-  uuid-v4: \*
+  'uuid-v4': \*
   request: \*
 directories:
   bin: \./bin

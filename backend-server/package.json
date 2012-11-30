@@ -10,7 +10,7 @@
   "dependencies": {
     "zappajs": "0.4.x",
     "nodemon": "*",
-    "uuid": "*",
+    "uuid-v4": "*",
     "request": "*"
   },
   "directories": {
