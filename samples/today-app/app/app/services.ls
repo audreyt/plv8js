@@ -11,7 +11,7 @@ const prefix = '/db/Today/collections'
       update: {method: 'PUT'}
     }
   .factory 'Task', <[$resource]> +++ ($resource) ->
-    $resource prefix + '/List/:_List/tasks/:_id', {_id: '@_id'}, {
+    $resource prefix + '/List/:_List/tasks/:_id', {_id: '@_id', _List: '@_List'}, {
       index: { method: 'GET', isArray: true },
       create: {method: 'POST'}
       show: {method: 'GET'}
