@@ -1,3 +1,5 @@
+{walk} = require \./compile
+
 initmodels = (cb) ->
     {USER} = process.env
     {STRING, TEXT, DATE, BOOLEAN, INTEGER}:Sequelize = require \sequelize
@@ -10,6 +12,16 @@ initmodels = (cb) ->
         DateTime: -> type: DATE, defaultValue: Sequelize.NOW
         Bool: -> BOOLEAN
         Text: -> TEXT
+
+    modelmeta = do
+        List: do
+            tasks:              $from: \Task
+            tasksAddedAtStart:  $from: \Task $query: CreatedAt: $: \CreatedAt
+            tasksAddedAtLater:  $from: \Task $query: CreatedAt: $gt: $: \CreatedAt
+            completeTasks:      $from: \Task $query: { +Complete }
+            incompleteTasks:    $from: \Task $query: { -Complete }
+            isFinalized:        $: CreatedAt: $gt: $ago: 18hr * 3600s * 1000ms
+
 
     Task = sql.define \Task do
         _id: @UUID!
@@ -29,36 +41,7 @@ initmodels = (cb) ->
         CompletedAt: @DateTime!
         FinalMailSent: @Bool!
     List.hasMany Task, { as: \tasks, foreignKey: \_List, -useJunctionTable }
-    List.userDefinedAttributes =
-        * """
-            (select COALESCE(ARRAY_TO_JSON(ARRAY_AGG(_)), '[]') FROM (SELECT * from "Tasks") AS _)
-        """ \tasks
-        * """
-            (select COALESCE(ARRAY_TO_JSON(ARRAY_AGG(_)), '[]') FROM (SELECT * from "Tasks"
-                WHERE "Tasks"."CreatedAt" = "Lists"."CreatedAt"
-            ) AS _)
-        """ \tasksAddedAtStart
-        * """
-            (select COALESCE(ARRAY_TO_JSON(ARRAY_AGG(_)), '[]') FROM (SELECT * from "Tasks"
-                WHERE "Tasks"."CreatedAt" > "Lists"."CreatedAt"
-            ) AS _)
-        """ \tasksAddedAtLater
-        * """
-            (select COALESCE(ARRAY_TO_JSON(ARRAY_AGG(_)), '[]') FROM (SELECT * from "Tasks"
-                WHERE "Tasks"."Complete"
-            ) AS _)
-        """ \completeTasks
-        * """
-            (select COALESCE(ARRAY_TO_JSON(ARRAY_AGG(_)), '[]') FROM (SELECT * from "Tasks"
-                WHERE NOT "Tasks"."Complete"
-            ) AS _)
-        """ \incompleteTasks
-        * """
-            "CreatedAt" < 'now'::timestamptz - '#{
-                18hr * 3600s * 1000ms
-            }ms'::interval
-        """ \isFinalized
-
+    List.userDefinedAttributes = walk \List modelmeta
     new Sequelize.Utils.QueryChainer!
         .add List.sync!
         .add Task.sync!
