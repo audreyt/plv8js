@@ -4,6 +4,17 @@ mod = {}
 mod.ListController = <[$scope List Task $location $routeParams $timeout]> +++ ($scope, List, Task, $location, $routeParams, $timeout) ->
 
   $scope <<< do
+    processList: (list) ->
+        list.CreatedAt = new Date(list.CreatedAt)
+        if list.NextList
+            $scope.nextList = list.get { _id: list.NextList }, (nextList) -> (
+               nextList.CreatedAt = new Date(nextList.CreatedAt))
+        if list.PreviousList
+            $scope.previousList = List.get { _id: list.PreviousList }, (previousList) -> (
+               previousList.CreatedAt = new Date(previousList.CreatedAt))
+        for task in list.tasks
+            task.CreatedAt = new Date(task.CreatedAt) if task.CreatedAt
+            task.CompletedAt = new Date(task.CompletedAt) if task.CompletedAt
 
     listFinalized: ->
       now = new Date()
@@ -61,25 +72,25 @@ mod.ListController = <[$scope List Task $location $routeParams $timeout]> +++ ($
 
      for item in lines / /[\r\n]+/
         $scope.list.tasks.push { Description: item, AddedLater: isLater }
-     $scope.list.$update!
+     $scope.list.$update {}, ((resource) -> $scope.processList(resource))
+
 
     updateTask: (task) ->
         if task.Complete and not task.CompletedAt
             task.CompletedAt = new Date
         else if !task.Complete and task.CompletedAt
             task.CompletedAt = null
-        $scope.list.$update!
-        #task.$update {}, ((resource) -> resource.CompletedAt = new Date(resource.CompletedAt) if resource.CompletedAt)
+        $scope.list.$update {}, ((resource) -> $scope.processList(resource))
 
     destroyTask: (task) ->
       $scope.list.tasks .=filter -> it isnt task
-      $scope.list.$update!
+      $scope.list.$update {}, ((resource) -> $scope.processList(resource))
 
     redirectToNewList: ->
        List.create {PreviousList: $scope._id}, (resource) -> (
            if $scope.list
                $scope.list.NextList = resource._id
-               $scope.list.$update!
+               $scope.list.$update {}, ((resource) -> $scope.processList(resource))
            $location.path '/list/' + resource._id ),
            (response) -> console.log response
 
@@ -93,13 +104,7 @@ mod.ListController = <[$scope List Task $location $routeParams $timeout]> +++ ($
     $scope.list = List.get {_id: $scope._id}, ((resource) ->
         unless resource
             $scope.redirectToNewList!
-        resource.CreatedAt = new Date(resource.CreatedAt)
-        if resource.NextList
-            $scope.nextList = List.get { _id: resource.NextList }, (nextResource) -> (
-               nextResource.CreatedAt = new Date(nextResource.CreatedAt))
-        if resource.PreviousList
-            $scope.previousList = List.get { _id: resource.PreviousList }, (previousResource) -> (
-               previousResource.CreatedAt = new Date(previousResource.CreatedAt))
+        $scope.processList(resource)
         $scope.startClock!
 
         ), (response) -> console.log response
