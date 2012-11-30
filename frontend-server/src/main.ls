@@ -69,6 +69,11 @@ models = {List, Task} = (<~ require \./model .initmodels)
         return @res.send 404 {error: "No such ID"} unless object?
         @res.send 200 object
 
+    @get '/:appname/collections/:model/:id/:field': ->
+        object <~ findOneWithModel @params.model, {_id: @params.id}, no
+        return @res.send 404 {error: "No such ID"} unless object?
+        @res.send 200 object[@params.field]
+
     @put '/:appname/collections/:model/:id': ->
         object <~ findOneWithModel @params.model, {_id: @params.id}, yes
         return @res.send 404 {error: "No such ID"} unless object?
