@@ -25,6 +25,9 @@ mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, Li
     laterTasksComplete: ->
       $scope.tasks.filter -> it.Complete and it.AddedLater
 
+    tasksIncomplete: ->
+      $scope.tasks.filter -> ! it.Complete
+
     tasksComplete: ->
       $scope.tasks.filter -> it.Complete
 
