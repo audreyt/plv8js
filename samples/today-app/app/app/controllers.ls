@@ -40,9 +40,6 @@ mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, Li
       task.$delete!
       $scope.tasks .=filter -> it isnt task
 
-    toggleComplete: (task) ->
-      task.$update!
-
     redirectToNewList: ->
        List.create {PreviousList: $scope.list._id}, (resource) -> (
             if $scope.list._id
