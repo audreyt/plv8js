@@ -31,17 +31,15 @@ models = {List, Task} = (<~ require \./model .initmodels)
 
     appname = 'Today'
 
-    findWithModel = (model, queries, cb) ->
+    findWithModel = (model, queries, raw, cb) ->
         m = models[model] or throw 'undefined model'
         m.findAll do
             where: queries
             attributes: (m.userDefinedAttributes ? []) +++ Object.keys m.rawAttributes
-        .success ->
-            console.log it
-            cb it.map (.selectedValues)
+        .success -> cb if raw => it else it.map (.selectedValues)
 
-    findOneWithModel = (model, queries, cb) ->
-        findWithModel model, queries, ->
+    findOneWithModel = (model, queries, raw, cb) ->
+        findWithModel model, queries, raw, ->
             | it.length == 0 => cb null
             else             => cb it.0
 
@@ -63,13 +61,25 @@ models = {List, Task} = (<~ require \./model .initmodels)
         @res.send 201 object
 
     @get '/:appname/collections/:model': ->
-        res <~ findWithModel @params.model, null
+        res <~ findWithModel @params.model, null, no
         @res.send 200 res
 
     @get '/:appname/collections/:model/:id': ->
-        object <~ findOneWithModel @params.model, {_id: @params.id}
+        object <~ findOneWithModel @params.model, {_id: @params.id}, no
         return @res.send 404 {error: "No such ID"} unless object?
         @res.send 200 object
+
+    @put '/:appname/collections/:model/:id': ->
+        object <~ findOneWithModel @params.model, {_id: @params.id}, yes
+        return @res.send 404 {error: "No such ID"} unless object?
+        object.updateAttributes @body
+        @res.send 200 object
+
+    @del '/:appname/collections/:model/:id': ->
+        object <~ findOneWithModel @params.model, {_id: @params.id}, yes
+        return @res.send 404 {error: "No such ID"} unless object?
+        <~ object.destroy!
+        @res.send 201 null
 
 setupDatabase = ->
     restInsert = """

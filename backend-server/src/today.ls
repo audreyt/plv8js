@@ -15,6 +15,11 @@ console.log \hi
 err, response, ttt <- request.post do
     uri: base + 'db/Today/collections/Task'
     json: do
-        description: \Perfetto
+        Description: \Perfetto
 console.log \posted
 console.log ttt
+
+err, response, body <- request.put do
+    uri: base + 'db/Today/collections/Task/' + ttt._id
+    json: { Description: \updatedFoo }
+console.log body
