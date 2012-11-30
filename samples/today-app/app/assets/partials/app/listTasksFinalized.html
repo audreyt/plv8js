@@ -1,5 +1,4 @@
 <h2>Tasks!</h2>
-<h2>{{listFinalized()}}</h2>
       <ul class="tasks">
           <li ng-repeat="task in tasks | filter:{AddedLater: false }" >
           <input class="toggle" type="checkbox" ng-model="task.Complete" disabled=disabled/>
