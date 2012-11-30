@@ -61,7 +61,7 @@ mod.ListController = <[$scope List Task $location $routeParams $timeout]> +++ ($
 
      for item in lines / /[\r\n]+/
         $scope.list.tasks.push { Description: item, AddedLater: isLater }
-        $scope.list.$update!
+     $scope.list.$update!
 
     updateTask: (task) ->
         if task.Complete and not task.CompletedAt
