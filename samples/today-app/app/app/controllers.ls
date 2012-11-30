@@ -30,15 +30,11 @@ mod.ListController = <[$scope List Task $location $routeParams $timeout]> +++ ($
       $timeout do
         function some-work
             latestUpdate = $scope.list.CreatedAt
-            console.log "list created at is "
-            console.log typeof $scope.list.CreatedAt
-            $scope.tasksComplete!.filter ->
-                console.log "item checked off type"
-                console.log typeof it.CompletedAt
-
-                latestUpdate = it.CompletedAt if it.CompletedAt > latestUpdate
+            for {CompletedAt:c}:t in $scope.tasksComplete!
+                d = new Date Date.parse c
+                if d > latestUpdate
+                    latestUpdate = d
             now = new Date()
-            console.log latestUpdate
             $scope.clock = $scope.formatTime ((now - latestUpdate))
             $timeout some-work, 1000ms
         1000ms
@@ -70,8 +66,8 @@ mod.ListController = <[$scope List Task $location $routeParams $timeout]> +++ ($
             (response) -> console.log response
 
     updateTask: (task) ->
-        if(task.Complete and ! task.CompletedAt)
-            task.CompletedAt = new Date()
+        if task.Complete and not task.CompletedAt
+            task.CompletedAt = new Date
         else if !task.Complete and task.CompletedAt
             task.CompletedAt = null
         task.$update!
@@ -111,6 +107,10 @@ mod.ListController = <[$scope List Task $location $routeParams $timeout]> +++ ($
 
         ), (response) -> console.log response
 
-  Task.index {_List: $scope._id},  ((resource) -> $scope.tasks = resource), (response) -> console.log response
+  Task.index {_List: $scope._id},  ((resource) ->
+      for {CompletedAt}:t in resource
+            t.CompletedAt = new Date CompletedAt if CompletedAt
+      $scope.tasks = resource
+      ), (response) -> console.log response
 
 angular.module 'app.controllers' [] .controller mod
