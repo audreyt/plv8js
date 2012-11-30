@@ -10,12 +10,7 @@
             <div class="brand">
                 <a href="/">Today for {{ list.CreatedAt.toLocaleDateString() }}</a>
             </div>
-            <div class="prev-list-nav" ng-show="previousList">
-                <a href="#/list/{{previousList._id}}">{{previousList.CreatedAt.toLocaleDateString()}}</a>
-            <div class="next-list-nav" ng-show="nextList">
-                <a href="#/list/{{nextList._id}}">{{nextList.CreatedAt.toLocaleDateString()}}</a>
-            </div>
-            <div class="nav-collapse">
+            <div class="pull-right">
               <div ng-include="'/partials/app/nav.html'"></div>
             </div>
           </div>

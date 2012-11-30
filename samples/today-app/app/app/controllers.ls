@@ -42,11 +42,11 @@ mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, Li
 
     redirectToNewList: ->
        List.create {PreviousList: $scope.list._id}, (resource) -> (
-            if $scope.list._id
-                $scope.list.NextList = resource._id
-                $scope.list.$update
-            $location.path '/list/' + resource._id ),
-            (response) -> console.log response
+           if $scope.list
+               $scope.list.NextList = resource._id
+               $scope.list.$update!
+           $location.path '/list/' + resource._id ),
+           (response) -> console.log response
 
   $scope._id = $routeParams.listUuid
   $scope.tasks = []
