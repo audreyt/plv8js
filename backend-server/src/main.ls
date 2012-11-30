@@ -103,8 +103,8 @@ modelmeta = do
             pid = object._id
             sub-model = singularize \tasks
             memstore[sub-model] = []
+            m = models[sub-model] ?= null
             for sub-body in @body.tasks
-                m = models[sub-model] ?= null
                 sub-object = if m => new m <<< sub-body else sub-body
                 sub-object["_#model"] ?= pid
                 memstore[][sub-model].push sub-object

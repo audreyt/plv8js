@@ -1,5 +1,14 @@
 {walk} = require \./compile
 
+modelmeta = do
+    List: do
+        tasks:              $from: \Task
+        tasksAddedAtStart:  $from: \Task $query: CreatedAt: $: \CreatedAt
+        tasksAddedAtLater:  $from: \Task $query: CreatedAt: $gt: $: \CreatedAt
+        completeTasks:      $from: \Task $query: { +Complete }
+        incompleteTasks:    $from: \Task $query: { -Complete }
+        isFinalized:        $: CreatedAt: $gt: $ago: 18hr * 3600s * 1000ms
+
 initmodels = (cb) ->
     {USER} = process.env
     {STRING, TEXT, DATE, BOOLEAN, INTEGER}:Sequelize = require \sequelize
@@ -12,15 +21,6 @@ initmodels = (cb) ->
         DateTime: -> type: DATE, defaultValue: Sequelize.NOW
         Bool: -> BOOLEAN
         Text: -> TEXT
-
-    modelmeta = do
-        List: do
-            tasks:              $from: \Task
-            tasksAddedAtStart:  $from: \Task $query: CreatedAt: $: \CreatedAt
-            tasksAddedAtLater:  $from: \Task $query: CreatedAt: $gt: $: \CreatedAt
-            completeTasks:      $from: \Task $query: { +Complete }
-            incompleteTasks:    $from: \Task $query: { -Complete }
-            isFinalized:        $: CreatedAt: $gt: $ago: 18hr * 3600s * 1000ms
 
 
     Task = sql.define \Task do
@@ -67,4 +67,4 @@ samples = ->
     console.log l
     console.log t
 
-module.exports = { initmodels, samples }
+module.exports = { initmodels, modelmeta, samples }

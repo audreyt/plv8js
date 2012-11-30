@@ -12,6 +12,7 @@ dependencies:
   nodemon: \*
   squel: \*
   sequelize: \*
+  async: \*
   'uuid-v4': \*
 directories:
   bin: \./bin

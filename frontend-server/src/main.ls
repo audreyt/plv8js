@@ -1,16 +1,7 @@
-require! { uuid: \uuid-v4 }
-require! pg
+require! { pg, async, uuid: \uuid-v4 }
 const { USER } = process.env
 const pgConString = "tcp://#USER@localhost/#USER"
-
-modelmeta = do
-    List: do
-        tasks:              $from: \Task
-        tasksAddedAtStart:  $from: \Task $query: CreatedAt: $: \CreatedAt
-        tasksAddedAtLater:  $from: \Task $query: CreatedAt: $gt: $: \CreatedAt
-        completeTasks:      $from: \Task $query: { +Complete }
-        incompleteTasks:    $from: \Task $query: { -Complete }
-        isFinalized:        $: CreatedAt: $gt: $ago: 18hr * 3600s * 1000ms
+const { modelmeta } = require \./model
 
 models = {List, Task} = (<~ require \./model .initmodels)
 @include = ->
@@ -29,6 +20,7 @@ models = {List, Task} = (<~ require \./model .initmodels)
             orig.call @, { ["/db#k", v] for k, v of it }
 
     appname = 'Today'
+
 
     findWithModel = (model, queries, raw, cb) ->
         m = models[model] or throw 'undefined model'
@@ -78,15 +70,29 @@ models = {List, Task} = (<~ require \./model .initmodels)
         @res.send 200 object[@params.field]
 
     @put '/:appname/collections/:model/:id': ->
-        object <~ findOneWithModel @params.model, {_id: @params.id}, yes
+        {model, id} = @params
+        object <~ findOneWithModel model, {_id: id}, yes
         return @res.send 404 {error: "No such ID"} unless object?
-        object.updateAttributes @body
 
         if @body.tasks
             pid = object._id
-            # TODO: Purge all sub-tasks and re-add new ones
-
-        @res.send 200 object
+            sub-model = singularize \tasks
+            res <~ findWithModel sub-model, { _List: pid }, \raw
+            console.log res
+            console.log res.destroy
+            todo = []
+            m = models[sub-model] ?= null
+            for sub-body in @body.tasks => let attrs = {_id: uuid!, "_#model": pid} <<< sub-body
+                todo.push (cb) -> m.create(attrs).success(cb)
+            todo.push ~>
+                delete @body.tasks
+                object.updateAttributes @body
+                @res.send 200 object
+            console.log todo
+            async.series todo
+        else
+            object.updateAttributes @body
+            @res.send 200 object
 
     @del '/:appname/collections/:model/:id': ->
         object <~ findOneWithModel @params.model, {_id: @params.id}, yes
