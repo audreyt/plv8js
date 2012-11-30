@@ -1,3 +1,5 @@
-all :: run
-run ::
-	nodemon -x lsc server.ls -w .
+all ::
+	lsc -bco lib src
+
+run :: all
+	PATH=node_modules/.bin:$(PATH) nodemon lib/server.js -w .
