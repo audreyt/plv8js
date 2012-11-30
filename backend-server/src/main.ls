@@ -98,7 +98,6 @@ modelmeta = do
             memstore[][@params.model].push object
 
         object <<< @body
-
         if @body.tasks
             pid = object._id
             sub-model = singularize \tasks
@@ -108,7 +107,6 @@ modelmeta = do
                 sub-object = if m => new m <<< sub-body else sub-body
                 sub-object["_#model"] ?= pid
                 memstore[][sub-model].push sub-object
-            delete @body.tasks
 
         @res.send 200 object
 

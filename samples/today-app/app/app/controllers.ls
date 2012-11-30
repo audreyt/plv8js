@@ -62,7 +62,10 @@ mod.ListController = <[$scope List Task $location $routeParams $timeout]> +++ ($
       $scope.list.tasks.filter -> it.Complete and it.AddedLater
 
     tasksIncomplete: ->
-      $scope.list.tasks.filter -> ! it.Complete
+      rv = $scope.list.tasks.filter -> not it.Complete
+      console.log "TInc: #rv with #{ rv.length }"
+      console.log rv
+      return rv
 
     tasksComplete: ->
       $scope.list.tasks.filter -> it.Complete

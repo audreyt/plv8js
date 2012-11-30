@@ -82,8 +82,10 @@ models = {List, Task} = (<~ require \./model .initmodels)
             sub-model = singularize \tasks
             res <~ findWithModel sub-model, { _List: pid }, \raw
             todo = []
-            for r in res
-                todo.push (cb) -> r.destroy!success -> cb null
+
+            # TODO: Probably not deleting everything and inserting them back again
+            err, result <~ pgClient.query 'DELETE FROM "Tasks" WHERE "_List" = $1' [pid]
+
             m = models[sub-model] ?= null
             fresh-tasks = []
             for sub-body in @body.tasks => do ->
@@ -92,6 +94,7 @@ models = {List, Task} = (<~ require \./model .initmodels)
                 todo.push (cb) ->
                     m.create(attrs).success(-> cb null)
                 todo.push (cb) ->
+                    # TODO: Probably ensuring creation works before finding
                     findOneWithModel sub-model, {_id}, no, (fresh-object) ->
                         fresh-tasks.push JSON.parse JSON.stringify fresh-object
                         cb null
@@ -100,7 +103,8 @@ models = {List, Task} = (<~ require \./model .initmodels)
                 delete @body.tasks
                 object.updateAttributes @body
                 json = JSON.parse JSON.stringify object
-                json.tasks = fresh-tasks
+                # json.tasks = fresh-tasks
+                json.tasks = stale-tasks
                 @res.json 200 json
             async.series todo
         else

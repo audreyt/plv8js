@@ -16,7 +16,7 @@ initmodels = (cb) ->
 
     @ <<< do
         UUID: -> type: STRING, isUUID: 4
-        Ref: -> INTEGER # type: STRING, isUUID: 4
+        Ref: -> type: STRING, isUUID: 4
         EmailAddress: -> STRING
         DateTime: -> type: DATE, defaultValue: Sequelize.NOW
         Bool: -> BOOLEAN
@@ -30,6 +30,7 @@ initmodels = (cb) ->
         Description: @Text!
         CreatedAt: @DateTime!
         CompletedAt: @DateTime!
+        AddedLater: @Bool!
 
     List = sql.define \List do
         _id: @UUID!
@@ -40,6 +41,7 @@ initmodels = (cb) ->
         LastCheckmarkAt: @DateTime!
         CompletedAt: @DateTime!
         FinalMailSent: @Bool!
+
     List.hasMany Task, { as: \tasks, foreignKey: \_List, -useJunctionTable }
     List.userDefinedAttributes = walk \List modelmeta
     new Sequelize.Utils.QueryChainer!

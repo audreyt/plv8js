@@ -28,6 +28,7 @@ class Task
         Description: @Text!
         CreatedAt: @DateTime!
         CompletedAt: @DateTime!
+        AddedLater: @Bool!
     class @Create
         (args) -> @ <<< args
 
