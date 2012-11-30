@@ -35,7 +35,11 @@ models = {List, Task} = (<~ require \./model .initmodels)
         m.findAll do
             where: queries
             attributes: (m.userDefinedAttributes ? []) +++ Object.keys m.rawAttributes
-        .success -> cb if raw => it else it.map (.selectedValues)
+        .success -> cb if raw => it else it.map ->
+            row = it.selectedValues
+            for col, val of row
+                row[col] = JSON.parse val if /^\[/.test(val)
+            return row
 
     findOneWithModel = (model, queries, raw, cb) ->
         findWithModel model, queries, raw, ->
@@ -85,22 +89,34 @@ models = {List, Task} = (<~ require \./model .initmodels)
         <~ object.destroy!
         @res.send 201 null
 
+    singularize = (x) -> "#x".replace(/ies$/ 'y').replace(/s$/, '').replace(/^./, -> it.toUpperCase!)
+
     # CargoCulting, refactor later
-    @post '/:appname/collections/:model/:pid/tasks': ->
-        m = models.Task ?= null
-        object <~ m.create {_id: uuid!, "_#{ @params.model }": @params.pid} <<< @body .success
+    @post '/:appname/collections/:pmodel/:pid/:model': ->
+        model = singularize @params.model
+        m = models[model] ?= null
+        object <~ m.create {_id: uuid!, "_#{ @params.pmodel }": @params.pid} <<< @body .success
         @res.send 201 object
 
     # CargoCulting, refactor later
-    @put '/:appname/collections/:model/:pid/tasks/:id': ->
-        object <~ findOneWithModel \Task {_id: @params.pid}, yes
+    @put '/:appname/collections/:pmodel/:pid/:model/:id': ->
+        model = singularize @params.model
+        object <~ findOneWithModel model, {_id: @params.id}, yes
         return @res.send 404 {error: "No such ID"} unless object?
         object.updateAttributes @body
         @res.send 200 object
 
     # CargoCulting, refactor later
-    @del '/:appname/collections/:model/:pid/tasks/:id': ->
-        object <~ findOneWithModel \Task {_id: @params.pid}, yes
+    @get '/:appname/collections/:pmodel/:pid/:model/:id': ->
+        model = singularize @params.model
+        object <~ findOneWithModel model, {_id: @params.id}, no
+        return @res.send 404 {error: "No such ID"} unless object?
+        @res.send 200 object[@params.field]
+
+    # CargoCulting, refactor later
+    @del '/:appname/collections/:pmodel/:pid/:model/:id': ->
+        model = singularize @params.model
+        object <~ findOneWithModel \Task {_id: @params.id}, yes
         return @res.send 404 {error: "No such ID"} unless object?
         <~ object.destroy!
         @res.send 201 null
