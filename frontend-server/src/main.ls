@@ -55,7 +55,7 @@ models = {List, Task} = (<~ require \./model .initmodels)
         res <~ m.findAll do
             attributes: (m.userDefinedAttributes ? []) +++ Object.keys List.rawAttributes
         .success
-        @res.send 200 res
+        @res.send 200 res.map (.selectedValues)
 
     @get '/:appname/collections/:model/:id': ->
         {id, model} = @params
@@ -66,7 +66,7 @@ models = {List, Task} = (<~ require \./model .initmodels)
             attributes: (m.userDefinedAttributes ? []) +++ Object.keys List.rawAttributes
         .success
         return @res.send 404 {error: "No such ID"} unless res.length
-        @res.send 200 res.0
+        @res.send 200 res.0.selectedValues
 
 setupDatabase = ->
     restInsert = """
