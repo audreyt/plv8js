@@ -2,24 +2,6 @@ mod = {}
 
 
 mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, List, Task, $location, $routeParams) ->
-  $scope._id = $routeParams.listUuid
-  $scope.tasks = []
-  # Defined before we call it
-  $scope.redirectToNewList = ->
-     List.create {}, (resource) -> $location.path '/list/' + resource._id , (response) -> console.log response
-
-  if ($routeParams.listUuid == "")
-     $scope.redirectToNewList!
-
-  if $scope._id
-    $scope.list = List.get {_id: $scope._id}, ((resource) ->
-        unless resource
-            $scope.redirectToNewList!
-        $scope.tasks = resource.tasks || []
-        resource.CreatedAt = new Date(resource.CreatedAt)
-        ), (response) -> console.log response
-
-  Task.index {_List: $scope._id},  ((resource) -> $scope.tasks = resource), (response) -> console.log response
 
   $scope <<< do
 
@@ -63,11 +45,41 @@ mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, Li
       # ajax success
 
     destroyTask: (task) ->
-      console.log 'Destroy'
-      Task.destroy {_id: task._id, _List: $scope.list._id}, ((resource) -> $scope.tasks .=filter -> it isnt task)
+      task.$delete!
+      $scope.tasks .=filter -> it isnt task
 
     toggleComplete: (task) ->
-      Task.update { _id: task._id, _List: $scope.list._id } { Complete: task.Complete }
+      task.$update!
 
+    redirectToNewList: ->
+       List.create {PreviousList: $scope.list._id}, (resource) -> (
+            if $scope.list._id
+                $scope.list.NextList = resource._id
+                $scope.list.$update
+            $location.path '/list/' + resource._id ),
+            (response) -> console.log response
+
+  $scope._id = $routeParams.listUuid
+  $scope.tasks = []
+  # Defined before we call it
+
+  if ($routeParams.listUuid == "")
+     $scope.redirectToNewList!
+
+  if $scope._id
+    $scope.list = List.get {_id: $scope._id}, ((resource) ->
+        unless resource
+            $scope.redirectToNewList!
+        $scope.tasks = resource.tasks || []
+        resource.CreatedAt = new Date(resource.CreatedAt)
+        if resource.NextList
+            $scope.nextList = List.get { _id: resource.NextList }, (nextResource) -> (
+               nextResource.CreatedAt = new Date(nextResource.CreatedAt))
+        if resource.PreviousList
+            $scope.previousList = List.get { _id: resource.PreviousList }, (previousResource) -> (
+               previousResource.CreatedAt = new Date(previousResource.CreatedAt))
+        ), (response) -> console.log response
+
+  Task.index {_List: $scope._id},  ((resource) -> $scope.tasks = resource), (response) -> console.log response
 
 angular.module 'app.controllers' [] .controller mod
