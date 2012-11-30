@@ -31,9 +31,8 @@ mod.ListController = <[$scope List Task $location $routeParams $timeout]> +++ ($
         function some-work
             latestUpdate = $scope.list.CreatedAt
             for {CompletedAt:c}:t in $scope.tasksComplete!
-                d = new Date Date.parse c
-                if d > latestUpdate
-                    latestUpdate = d
+                if c > latestUpdate
+                    latestUpdate = c
             now = new Date()
             $scope.clock = $scope.formatTime ((now - latestUpdate))
             $timeout some-work, 1000ms
@@ -70,7 +69,7 @@ mod.ListController = <[$scope List Task $location $routeParams $timeout]> +++ ($
             task.CompletedAt = new Date
         else if !task.Complete and task.CompletedAt
             task.CompletedAt = null
-        task.$update!
+        task.$update {}, ((resource) -> resource.CompletedAt = new Date(resource.CompletedAt) if resource.CompletedAt)
 
     destroyTask: (task) ->
       task.$delete!
