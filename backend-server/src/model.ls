@@ -1,7 +1,7 @@
-require! {uuid: 'uuid-pure'}
+require! { uuid: \uuid-v4 }
 
 ProtoExample =
-    UUID: -> uuid.newId!
+    UUID: -> uuid!
     EmailAddress: -> 'foo@foo.com'
     DateTime: -> new Date
     Bool: -> false
