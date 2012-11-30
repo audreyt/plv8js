@@ -9,7 +9,6 @@ const prefix = '/db/Today/collections'
       create: {method: 'POST'}
       show: {method: 'GET'}
       update: {method: 'PUT'}
-      destroy: {method: 'DELETE'}
     }
   .factory 'Task', <[$resource]> +++ ($resource) ->
     $resource prefix + '/List/:_List/tasks/:_id', {_id: '@_id'}, {
@@ -17,6 +16,5 @@ const prefix = '/db/Today/collections'
       create: {method: 'POST'}
       show: {method: 'GET'}
       update: {method: 'PUT'}
-      destroy: {method: 'DELETE'}
     }
 
