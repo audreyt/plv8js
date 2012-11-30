@@ -16,12 +16,21 @@ mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, Li
         unless resource
             $scope.redirectToNewList!
         $scope.tasks = resource.tasks || []
-        console.log resource
-        console.log 'OK'), (response) -> console.log response
+        resource.CreatedAt = new Date(resource.CreatedAt)
+        ), (response) -> console.log response
 
   Task.index {_List: $scope._id},  ((resource) -> $scope.tasks = resource), (response) -> console.log response
 
   $scope <<< do
+
+    listFinalized: ->
+      start = new Date($scope.list.CreatedAt)
+      now = new Date()
+      # For now, lists last for about a minute
+      return (now - start) > (60 * 60 * 18)
+  # return !! (now - start) > (1000 * 60 * 60 * 18)
+
+
     initialTasksCompletePercentage: ->
       100 * ( $scope.initialTasksComplete!length / $scope.initialTasks!length)
 
@@ -45,8 +54,9 @@ mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, Li
      isLater = !!$scope.tasks.length
 
      for item in lines / /[\r\n]+/
-        console.log $scope._id
-        Task.save {_List: $scope.list._id}, { _List: $scope._id, Description: item, AddedLater: isLater }, ((resource) -> $scope.tasks.push resource ), (response) -> console.log response
+        Task.save {_List: $scope.list._id}, { _List: $scope._id, Description: item, AddedLater: isLater }, 
+            ((resource) -> $scope.tasks.push resource ), 
+            (response) -> console.log response
 
     updateTask: (task,data) ->
       Task.update {_id: task._id, _List: $scope.list._id }, data, ((resource) -> console.log resource), (response) -> console.log response

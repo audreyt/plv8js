@@ -1,15 +1,25 @@
-<h1>{{ list._id }}</h1>
+      <div class="wrapper">
+          <div ng-include="'/partials/app/navbar.html'"></div>
+      <div class="container main-content">
 <div class="row-fluid">
     <div class="span8">
-        <div ng-show="tasks.length">
-            <ng-include src="'partials/app/listTasks.html'"></ng-include>
+        <div ng-show="!listFinalized()">
+	        <div ng-show="tasks.length">
+	            <ng-include src="'partials/app/listTasks.html'"></ng-include>
+	        </div>
+	        <div ng-show="!tasks.length">
+	            <ng-include src="'partials/app/createTasks.html'"></ng-include>
+            </div>
         </div>
-        <div ng-show="!tasks.length">
-            <ng-include src="'partials/app/createTasks.html'"></ng-include>
-        </div>
+        <div ng-show="listFinalized()">
+	        <div ng-show="tasks.length">
+	            <ng-include src="'partials/app/listTasksFinalized.html'"></ng-include>
+	        </div>
 
+        </div>
     </div>
     <div class="offset8 span4">
         <ng-include src="'partials/app/listSidebar.html'"></ng-include>
     </div>
 </div>
+      </div>

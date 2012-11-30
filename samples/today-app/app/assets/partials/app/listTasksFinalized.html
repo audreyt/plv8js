@@ -1,0 +1,15 @@
+<h2>Tasks!</h2>
+<h2>{{listFinalized()}}</h2>
+      <ul class="tasks">
+          <li ng-repeat="task in tasks | filter:{AddedLater: false }" >
+          <input class="toggle" type="checkbox" ng-model="task.Complete" disabled=disabled/>
+          <span ng-model="task.Description"/>
+        </li>
+      </ul>
+<h2>Tasks you added later...</h2>
+      <ul class="tasks">
+          <li ng-repeat="task in tasks | filter:{AddedLater: true }" >
+          <input class="toggle" type="checkbox" ng-model="task.Complete" disabled=disabled/>
+          <span>{{task.Description}}</span>
+        </li>
+      </ul>

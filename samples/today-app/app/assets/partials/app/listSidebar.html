@@ -1,3 +1,11 @@
-        <ng-include src="'partials/app/sidebarProgress.html'"></ng-include>
-        <ng-include src="'partials/app/sidebarAddTasks.html'"></ng-include>
+
+<div ng-show="tasks.length">
+    <ng-include src="'partials/app/sidebarProgress.html'"></ng-include>
+</div>
+<div ng-show="!listFinalized()">
+    <ng-include src="'partials/app/sidebarAddTasks.html'"></ng-include>
+</div>
+<div ng-show="listFinalized()">
+    <ng-include src="'partials/app/sidebarNewList.html'"></ng-include>
+</div>
         <ng-include src="'partials/app/sidebarEmailWidget.html'"></ng-include>
