@@ -1,17 +1,47 @@
 mod = {}
 
 
-mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, List, Task, $location, $routeParams) ->
+mod.ListController = <[$scope List Task $location $routeParams $timeout]> +++ ($scope, List, Task, $location, $routeParams, $timeout) ->
 
   $scope <<< do
 
     listFinalized: ->
-      start = new Date($scope.list.CreatedAt)
       now = new Date()
       # For now, lists last for about a minute
-      return (now - start) > (60 * 60 * 18)
-  # return !! (now - start) > (1000 * 60 * 60 * 18)
+      #return (now - $scope.list.CreatedAt) > (60 * 60 * 18)
+      return (now - $scope.list.CreatedAt) > (1000 * 60 * 60 * 18)
+  #
+    formatTime: (ms) ->
+        now = new Date(ms)
+        output = ''
+        output += $scope.pad2 now.getUTCHours! + ":" if now.getUTCHours!
+        output += $scope.pad2 now.getUTCMinutes! + ":"
+        output += $scope.pad2 now.getUTCSeconds!
+        return output
 
+    pad2: (num) ->
+        if num < 10
+            "0"+num
+        else
+            num
+
+
+    startClock: ->
+      $timeout do
+        function some-work
+            latestUpdate = $scope.list.CreatedAt
+            console.log "list created at is "
+            console.log typeof $scope.list.CreatedAt
+            $scope.tasksComplete!.filter ->
+                console.log "item checked off type"
+                console.log typeof it.CompletedAt
+
+                latestUpdate = it.CompletedAt if it.CompletedAt > latestUpdate
+            now = new Date()
+            console.log latestUpdate
+            $scope.clock = $scope.formatTime ((now - latestUpdate))
+            $timeout some-work, 1000ms
+        1000ms
 
     initialTasksCompletePercentage: ->
       100 * ( $scope.initialTasksComplete!length / $scope.initialTasks!length)
@@ -39,12 +69,19 @@ mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, Li
             ((resource) -> $scope.tasks.push resource ), 
             (response) -> console.log response
 
+    updateTask: (task) ->
+        if(task.Complete and ! task.CompletedAt)
+            task.CompletedAt = new Date()
+        else if !task.Complete and task.CompletedAt
+            task.CompletedAt = null
+        task.$update!
+
     destroyTask: (task) ->
       task.$delete!
       $scope.tasks .=filter -> it isnt task
 
     redirectToNewList: ->
-       List.create {PreviousList: $scope.list._id}, (resource) -> (
+       List.create {PreviousList: $scope._id}, (resource) -> (
            if $scope.list
                $scope.list.NextList = resource._id
                $scope.list.$update!
@@ -70,6 +107,8 @@ mod.ListController = <[$scope List Task $location $routeParams]> +++ ($scope, Li
         if resource.PreviousList
             $scope.previousList = List.get { _id: resource.PreviousList }, (previousResource) -> (
                previousResource.CreatedAt = new Date(previousResource.CreatedAt))
+        $scope.startClock!
+
         ), (response) -> console.log response
 
   Task.index {_List: $scope._id},  ((resource) -> $scope.tasks = resource), (response) -> console.log response
