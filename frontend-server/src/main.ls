@@ -1,3 +1,4 @@
+require! { uuid: \uuid-v4 }
 require! pg
 const { USER } = process.env
 const pgConString = "tcp://#USER@localhost/#USER"
@@ -11,11 +12,11 @@ modelmeta = do
         incompleteTasks:    $from: \Task $query: { -Complete }
         isFinalized:        $: CreatedAt: $gt: $ago: 18hr * 3600s * 1000ms
 
+models = {List, Task} = (<~ require \./model .initmodels)
 @include = ->
     memmeta ?= modelmeta
-    models = {List, Task} = require \./model .initmodels pgConString # XXX: share constring
-
     pgClient = setupDatabase!
+
     @use \bodyParser, @app.router, @express.static __dirname
     @get '/roundtrip': ->
         res <~ sendRequestToPg pgClient, @req
@@ -35,6 +36,17 @@ modelmeta = do
 
     @get '/:appname': ->
         @res.send 200 { collections: [k for k of models] }
+
+    @get '/:appname/collections': ->
+        @res.send 200 [k for k of models]
+
+    @post '/:appname/collections/:model': ->
+        m = models[@params.model] ?= null
+        # XXX: if this is a new model, need to sync db as well
+        console.log @params.model, @body
+        throw '....' unless m
+        object <~ m.create {_id: uuid!} <<< @body .success
+        @res.send 201 object
 
 setupDatabase = ->
     restInsert = """

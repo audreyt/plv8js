@@ -1,4 +1,4 @@
-initmodels = ->
+initmodels = (cb) ->
     {USER} = process.env
     {STRING, TEXT, DATE, BOOLEAN, INTEGER}:Sequelize = require \sequelize
     sql = new Sequelize USER, USER, null, dialect: 'postgres', host: \127.0.0.1, port: 5432
@@ -7,7 +7,7 @@ initmodels = ->
         UUID: -> type: STRING, isUUID: 4
         Ref: -> INTEGER # type: STRING, isUUID: 4
         EmailAddress: -> STRING
-        DateTime: -> DATE
+        DateTime: -> type: DATE, defaultValue: Sequelize.NOW
         Bool: -> BOOLEAN
         Text: -> TEXT
 
@@ -29,6 +29,12 @@ initmodels = ->
         CompletedAt: @DateTime!
         FinalMailSent: @Bool!
     List.hasMany Task, { as: \tasks, foreignKey: \_List, -useJunctionTable }
+
+    new Sequelize.Utils.QueryChainer!
+        .add List.sync!
+        .add Task.sync!
+        .run-serially!
+        .success cb
 
     { List, Task }
 

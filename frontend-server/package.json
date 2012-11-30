@@ -12,7 +12,8 @@
     "zappajs": "0.4.x",
     "nodemon": "*",
     "squel": "*",
-    "sequelize": "*"
+    "sequelize": "*",
+    "uuidV4": "*"
   },
   "directories": {
     "bin": "./bin"

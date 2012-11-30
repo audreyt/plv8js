@@ -11,23 +11,10 @@ ProtoList = do
 
 base = 'http://localhost:8888/'
 
-err, response, body <- request.put do
-    uri: base + 'db/Today/collections/List/_'
-    json: ProtoList
-console.log body
-
+console.log \hi
 err, response, ttt <- request.post do
-    uri: base + 'db/Today/collections/Cafe'
-    json: do
-        Name: \Perfetto
-console.log ttt
-
-err, response, [task] <- request.get do
     uri: base + 'db/Today/collections/Task'
-    json: true
-
-err, response, body <- request.put do
-    uri: base + 'db/Today/collections/Task/' + task._id
-    json: { Description: \foo }
-console.log body
-
+    json: do
+        description: \Perfetto
+console.log \posted
+console.log ttt
