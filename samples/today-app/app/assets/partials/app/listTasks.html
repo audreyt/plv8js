@@ -1,16 +1,16 @@
 <h2>Tasks!</h2>
       <ul class="tasks">
           <li ng-repeat="task in tasks | filter:{AddedLater: false }" >
-        <input class="toggle" type="checkbox" ng-model="task.Complete" ng-change="toggleComplete(task)"/>
-        <input type="text" ng-model="task.Description" ng-blur="updateTask(task, {Description: task.Description } )">
+        <input class="toggle" type="checkbox" ng-model="task.Complete" ng-change="task.$update()"/>
+        <input type="text" ng-model="task.Description" ng-blur="task.$update()">
         <button ng-click="destroyTask(task)"><i class="icon-delete">Delete</i></button>
         </li>
       </ul>
 <h2>Tasks you added later...</h2>
       <ul class="tasks">
           <li ng-repeat="task in tasks | filter:{AddedLater: true }" >
-        <input class="toggle" type="checkbox" ng-model="task.Complete" ng-change="toggleComplete(task)"/>
-        <input type="text" ng-model="task.Description" ng-blur="updateTask(task, {Description: task.Description } )">
+        <input class="toggle" type="checkbox" ng-model="task.Complete" ng-change="task.$update()"/>
+        <input type="text" ng-model="task.Description" ng-blur="task.$update()">
         <button ng-click="destroyTask(task)"><i class="icon-delete">Delete</i></button>
         </li>
       </ul>
