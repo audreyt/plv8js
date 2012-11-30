@@ -30,7 +30,10 @@ models = {List, Task} = (<~ require \./model .initmodels)
         .success -> cb if raw => it else it.map ->
             row = it.selectedValues
             for col, val of row
-                row[col] = JSON.parse val if /^\[/.test(val)
+                # console.log val - /"id":\d+,/g if val is /^\[/
+                # row[col] = JSON.parse(val - /"id":\d+,/g) if val is /^\[/
+                row[col] = JSON.parse val if val is /^\[/
+            # delete row.id
             return row
 
     findOneWithModel = (model, queries, raw, cb) ->
@@ -78,17 +81,27 @@ models = {List, Task} = (<~ require \./model .initmodels)
             pid = object._id
             sub-model = singularize \tasks
             res <~ findWithModel sub-model, { _List: pid }, \raw
-            console.log res
-            console.log res.destroy
             todo = []
+            for r in res
+                todo.push (cb) -> r.destroy!success -> cb null
             m = models[sub-model] ?= null
-            for sub-body in @body.tasks => let attrs = {_id: uuid!, "_#model": pid} <<< sub-body
-                todo.push (cb) -> m.create(attrs).success(-> cb null)
+            fresh-tasks = []
+            for sub-body in @body.tasks => do ->
+                _id = uuid!
+                attrs = {_id, "_#model": pid} <<< sub-body
+                todo.push (cb) ->
+                    m.create(attrs).success(-> cb null)
+                todo.push (cb) ->
+                    findOneWithModel sub-model, {_id}, no, (fresh-object) ->
+                        fresh-tasks.push JSON.parse JSON.stringify fresh-object
+                        cb null
             todo.push ~>
+                stale-tasks = @body.tasks
                 delete @body.tasks
                 object.updateAttributes @body
-                @res.send 200 object
-            console.log todo
+                json = JSON.parse JSON.stringify object
+                json.tasks = fresh-tasks
+                @res.json 200 json
             async.series todo
         else
             object.updateAttributes @body
