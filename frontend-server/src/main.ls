@@ -17,11 +17,10 @@ models = {List, Task} = (<~ require \./model .initmodels)
     memmeta ?= modelmeta
     pgClient = setupDatabase!
 
-    @use \bodyParser, @app.router, @express.static __dirname
+    @use \bodyParser, @app.router, @express.static __dirname + "/../_public"
     @get '/roundtrip': ->
         res <~ sendRequestToPg pgClient, @req
         serveResponseFromPg.call @, res
-    @get '/': -> @response.send 200 "Database configurated"
 
     for verb in <[get put post del]> => let orig = @[verb]
         @[verb] = ->
