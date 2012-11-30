@@ -85,6 +85,26 @@ models = {List, Task} = (<~ require \./model .initmodels)
         <~ object.destroy!
         @res.send 201 null
 
+    # CargoCulting, refactor later
+    @post '/:appname/collections/:model/:pid/tasks': ->
+        m = models.Task ?= null
+        object <~ m.create {_id: uuid!, "_#{ @params.model }": @params.pid} <<< @body .success
+        @res.send 201 object
+
+    # CargoCulting, refactor later
+    @put '/:appname/collections/:model/:pid/tasks/:id': ->
+        object <~ findOneWithModel \Task {_id: @params.pid}, yes
+        return @res.send 404 {error: "No such ID"} unless object?
+        object.updateAttributes @body
+        @res.send 200 object
+
+    # CargoCulting, refactor later
+    @del '/:appname/collections/:model/:pid/tasks/:id': ->
+        object <~ findOneWithModel \Task {_id: @params.pid}, yes
+        return @res.send 404 {error: "No such ID"} unless object?
+        <~ object.destroy!
+        @res.send 201 null
+
 setupDatabase = ->
     restInsert = """
         CREATE OR REPLACE FUNCTION rest (req json) RETURNS json AS $$
