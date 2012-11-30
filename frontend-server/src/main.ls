@@ -83,7 +83,7 @@ models = {List, Task} = (<~ require \./model .initmodels)
             todo = []
             m = models[sub-model] ?= null
             for sub-body in @body.tasks => let attrs = {_id: uuid!, "_#model": pid} <<< sub-body
-                todo.push (cb) -> m.create(attrs).success(cb)
+                todo.push (cb) -> m.create(attrs).success(-> cb null)
             todo.push ~>
                 delete @body.tasks
                 object.updateAttributes @body
