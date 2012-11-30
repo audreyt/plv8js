@@ -93,6 +93,7 @@ modelmeta = do
 
         pid = object._id
         if @body.tasks
+            memstore[@params.model] = []
             for sub-body in @body.tasks => let model = \Task
                 m = models[model] ?= null
                 object = if m => new m <<< sub-body else sub-body
@@ -141,7 +142,7 @@ modelmeta = do
 
     # CargoCulting, refactor later
     @del '/:appname/collections/:pmodel/:pid/:model/:id': ->
-        {pid} = @params
+        {id} = @params
         model = singularize @params.model
         memstore[model] = memstore[model].filter -> it._id isnt id
         @res.send 201 null

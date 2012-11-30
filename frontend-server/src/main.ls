@@ -81,6 +81,11 @@ models = {List, Task} = (<~ require \./model .initmodels)
         object <~ findOneWithModel @params.model, {_id: @params.id}, yes
         return @res.send 404 {error: "No such ID"} unless object?
         object.updateAttributes @body
+
+        if @body.tasks
+            pid = object._id
+            # TODO: Purge all sub-tasks and re-add new ones
+
         @res.send 200 object
 
     @del '/:appname/collections/:model/:id': ->
