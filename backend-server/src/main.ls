@@ -90,6 +90,15 @@ modelmeta = do
     @put '/:appname/collections/:model/:id': ->
         object = findOne ...@params<[model id]>
         object <<< @body
+
+        pid = object._id
+        if @body.tasks
+            for sub-body in @body.tasks => let model = \Task
+                m = models[model] ?= null
+                object = if m => new m <<< sub-body else sub-body
+                object["_List"] ?= pid
+                memstore[][model].push object
+
         @res.send 200 object
 
     @del '/:appname/collections/:model/:id': ->
