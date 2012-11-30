@@ -11,7 +11,8 @@
     "pg": "*",
     "zappajs": "0.4.x",
     "nodemon": "*",
-    "squel": "*"
+    "squel": "*",
+    "sequelize": "*"
   },
   "directories": {
     "bin": "./bin"

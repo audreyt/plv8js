@@ -11,6 +11,7 @@ dependencies:
   zappajs: \0.4.x
   nodemon: \*
   squel: \*
+  sequelize: \*
 directories:
   bin: \./bin
 scripts:
