@@ -88,17 +88,27 @@ modelmeta = do
         @res.send 200 @body
 
     @put '/:appname/collections/:model/:id': ->
+        {model, id} = @params
         object = findOne ...@params<[model id]>
+
+        # Autovivify on PUT
+        unless object
+            m = models[@params.model] ?= null
+            object = if m => new m <<< @body else @body
+            memstore[][@params.model].push object
+
         object <<< @body
 
-        pid = object._id
         if @body.tasks
-            memstore[@params.model] = []
-            for sub-body in @body.tasks => let model = \Task
-                m = models[model] ?= null
-                object = if m => new m <<< sub-body else sub-body
-                object["_List"] ?= pid
-                memstore[][model].push object
+            pid = object._id
+            sub-model = singularize \tasks
+            memstore[sub-model] = []
+            for sub-body in @body.tasks
+                m = models[sub-model] ?= null
+                sub-object = if m => new m <<< sub-body else sub-body
+                sub-object["_#model"] ?= pid
+                memstore[][sub-model].push sub-object
+            delete @body.tasks
 
         @res.send 200 object
 
