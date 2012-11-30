@@ -104,23 +104,35 @@ modelmeta = do
             count, fields, firstOnly, sort, skip, limit
         }
 
+    singularize = (x) -> "#x".replace(/ies$/ 'y').replace(/s$/, '').replace(/^./, -> it.toUpperCase!)
+
     # CargoCulting, refactor later
-    @post '/:appname/collections/:model/:pid/tasks': ->
-        m = models.Task ?= null
+    @post '/:appname/collections/:pmodel/:pid/:model': ->
+        model = singularize @params.model
+        m = models[model] ?= null
         object = if m => new m <<< @body else @body
-        object["_#{ @params.model }"] ?= @params.pid
-        memstore[][\Task].push object
+        object["_#{ @params.pmodel }"] ?= @params.pid
+        memstore[][model].push object
         @res.send 201 object
 
     # CargoCulting, refactor later
-    @put '/:appname/collections/:model/:pid/tasks/:id': ->
-        object = findOne \Task @params.id
+    @get '/:appname/collections/:pmodel/:pid/:model/:id': ->
+        {id, model} = @params
+        model = singularize model
+        res = select memmeta, memstore, model, filter: -> it._id is id
+        return @res.send 404 {error: "No such ID"} unless res.length
+        @res.send 200 res.0
+
+    # CargoCulting, refactor later
+    @put '/:appname/collections/:pmodel/:pid/:model/:id': ->
+        model = singularize @params.model
+        object = findOne model, @params.id
         object <<< @body
         @res.send 200 object
 
     # CargoCulting, refactor later
-    @del '/:appname/collections/:model/:pid/tasks/:id': ->
-        {id} = @params
-        model = \Task
+    @del '/:appname/collections/:pmodel/:pid/:model/:id': ->
+        {pid} = @params
+        model = singularize @params.model
         memstore[model] = memstore[model].filter -> it._id isnt id
         @res.send 201 null
