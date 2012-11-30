@@ -986,6 +986,17 @@ ReadInitScript(const char *filename)
 }
 
 #include "fs.cc"
+#include "eventjs.cc"
+
+
+static void install_events(Handle<Object> &global) {
+	Handle<FunctionTemplate> ft = js::eventjs_();
+	ft->SetClassName(String::New("eventjs"));
+	Handle<Object> obj = Object::New();
+	obj->Set(String::New("EventEmitter"), ft->GetFunction(), js::attribute_ro_de_dd);
+	global->Set(String::New("native_events_"), obj, js::attribute_ro_de_dd);
+}
+
 
 static Local<Function>
 CompileFunction(
@@ -1054,6 +1065,7 @@ CompileFunction(
 	Context::Scope	context_scope(global_context);
 	Handle<Object> context_global = global_context->Global();
 	js::install_native_fs(context_global);
+	install_events(context_global);
 	TryCatch		try_catch;
 	Local<Script>	script = Script::New(source, name);
 

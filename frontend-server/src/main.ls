@@ -2,13 +2,39 @@ require! pg
 const { USER } = process.env
 const pgConString = "tcp://#USER@localhost/#USER"
 
+modelmeta = do
+    List: do
+        tasks:              $from: \Task
+        tasksAddedAtStart:  $from: \Task $query: CreatedAt: $: \CreatedAt
+        tasksAddedAtLater:  $from: \Task $query: CreatedAt: $gt: $: \CreatedAt
+        completeTasks:      $from: \Task $query: { +Complete }
+        incompleteTasks:    $from: \Task $query: { -Complete }
+        isFinalized:        $: CreatedAt: $gt: $ago: 18hr * 3600s * 1000ms
+
 @include = ->
+    memmeta ?= modelmeta
+    models = {List, Task} = require \./model .initmodels pgConString # XXX: share constring
+
     pgClient = setupDatabase!
     @use \bodyParser, @app.router, @express.static __dirname
     @get '/roundtrip': ->
         res <~ sendRequestToPg pgClient, @req
         serveResponseFromPg.call @, res
     @get '/': -> @response.send 200 "Database configurated"
+
+    for verb in <[get put post del]> => let orig = @[verb]
+        @[verb] = ->
+            return orig.call @, ... unless typeof it is \object
+            orig.call @, { ["/databases#k", v] for k, v of it }
+            orig.call @, { ["/db#k", v] for k, v of it }
+
+    appname = 'Today'
+
+    @get '': ->
+        @res.send 200 [appname]
+
+    @get '/:appname': ->
+        @res.send 200 { collections: [k for k of models] }
 
 setupDatabase = ->
     restInsert = """
