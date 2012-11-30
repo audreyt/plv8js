@@ -48,6 +48,26 @@ models = {List, Task} = (<~ require \./model .initmodels)
         object <~ m.create {_id: uuid!} <<< @body .success
         @res.send 201 object
 
+    @get '/:appname/collections/:model': ->
+        {model} = @params
+        m = models[@params.model] ?= null
+        console.log \finding m.userDefinedAttributes
+        res <~ m.findAll do
+            attributes: (m.userDefinedAttributes ? []) +++ Object.keys List.rawAttributes
+        .success
+        @res.send 200 res
+
+    @get '/:appname/collections/:model/:id': ->
+        {id, model} = @params
+        m = models[@params.model] ?= null
+        console.log \finding m.userDefinedAttributes
+        res <~ m.findAll do
+            where: _id: id
+            attributes: (m.userDefinedAttributes ? []) +++ Object.keys List.rawAttributes
+        .success
+        return @res.send 404 {error: "No such ID"} unless res.length
+        @res.send 200 res.0
+
 setupDatabase = ->
     restInsert = """
         CREATE OR REPLACE FUNCTION rest (req json) RETURNS json AS $$

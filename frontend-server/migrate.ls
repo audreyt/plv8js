@@ -1,3 +1,4 @@
+uuid = require \uuid-v4
 {USER} = process.env
 {STRING, TEXT, DATE, BOOLEAN, INTEGER}:Sequelize = require \sequelize
 sql = new Sequelize USER, null, null, dialect: \postgres, port: 5432
@@ -38,8 +39,8 @@ List.hasMany Task, { as: \tasks, foreignKey: \_List, -useJunctionTable }
     .run-serially!
     .success
 
-l <- List.create { Owner: \foo@bar.com, CreatedAt: 'now' } .success
-t <- Task.create { Description: \foo, CreatedAt: 'now', -Complete } .success
+l <- List.create { _id: uuid!, Owner: \foo@bar.com, CreatedAt: 'now' } .success
+t <- Task.create { _id: uuid!, Description: \foo, CreatedAt: 'now', -Complete } .success
 
 <- l.setTasks [t] .success
 

@@ -29,6 +29,35 @@ initmodels = (cb) ->
         CompletedAt: @DateTime!
         FinalMailSent: @Bool!
     List.hasMany Task, { as: \tasks, foreignKey: \_List, -useJunctionTable }
+    List.userDefinedAttributes =
+        * """
+            (select COALESCE(ARRAY_TO_JSON(ARRAY_AGG(_)), '[]') FROM (SELECT * from "Tasks") AS _)
+        """ \tasks
+        * """
+            (select COALESCE(ARRAY_TO_JSON(ARRAY_AGG(_)), '[]') FROM (SELECT * from "Tasks"
+                WHERE "Tasks"."CreatedAt" = "Lists"."CreatedAt"
+            ) AS _)
+        """ \tasksAddedAtStart
+        * """
+            (select COALESCE(ARRAY_TO_JSON(ARRAY_AGG(_)), '[]') FROM (SELECT * from "Tasks"
+                WHERE "Tasks"."CreatedAt" > "Lists"."CreatedAt"
+            ) AS _)
+        """ \tasksAddedAtLater
+        * """
+            (select COALESCE(ARRAY_TO_JSON(ARRAY_AGG(_)), '[]') FROM (SELECT * from "Tasks"
+                WHERE "Tasks"."Complete"
+            ) AS _)
+        """ \completeTasks
+        * """
+            (select COALESCE(ARRAY_TO_JSON(ARRAY_AGG(_)), '[]') FROM (SELECT * from "Tasks"
+                WHERE NOT "Tasks"."Complete"
+            ) AS _)
+        """ \incompleteTasks
+        * """
+            "CreatedAt" < 'now'::timestamptz - '#{
+                18hr * 3600s * 1000ms
+            }ms'::interval
+        """ \isFinalized
 
     new Sequelize.Utils.QueryChainer!
         .add List.sync!
