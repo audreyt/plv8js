@@ -42,38 +42,38 @@ mod.ListController = <[$scope List Task $location $routeParams $timeout]> +++ ($
       100 * ( $scope.initialTasksComplete!length / $scope.initialTasks!length)
 
     initialTasks: ->
-      $scope.tasks.filter -> !it.AddedLater
+      $scope.list.tasks.filter -> !it.AddedLater
 
     initialTasksComplete: ->
-      $scope.tasks.filter -> it.Complete and !it.AddedLater
+      $scope.list.tasks.filter -> it.Complete and !it.AddedLater
 
     laterTasksComplete: ->
-      $scope.tasks.filter -> it.Complete and it.AddedLater
+      $scope.list.tasks.filter -> it.Complete and it.AddedLater
 
     tasksIncomplete: ->
-      $scope.tasks.filter -> ! it.Complete
+      $scope.list.tasks.filter -> ! it.Complete
 
     tasksComplete: ->
-      $scope.tasks.filter -> it.Complete
+      $scope.list.tasks.filter -> it.Complete
 
     addTasks: (lines) ->
-     isLater = !!$scope.tasks.length
+     isLater = !!$scope.list.tasks.length
 
      for item in lines / /[\r\n]+/
-        Task.save {_List: $scope.list._id}, { _List: $scope._id, Description: item, AddedLater: isLater }, 
-            ((resource) -> $scope.tasks.push resource ), 
-            (response) -> console.log response
+        $scope.list.tasks.push { Description: item, AddedLater: isLater }
+        $scope.list.$update!
 
     updateTask: (task) ->
         if task.Complete and not task.CompletedAt
             task.CompletedAt = new Date
         else if !task.Complete and task.CompletedAt
             task.CompletedAt = null
-        task.$update {}, ((resource) -> resource.CompletedAt = new Date(resource.CompletedAt) if resource.CompletedAt)
+        $scope.list.$update!
+        #task.$update {}, ((resource) -> resource.CompletedAt = new Date(resource.CompletedAt) if resource.CompletedAt)
 
     destroyTask: (task) ->
-      task.$delete!
-      $scope.tasks .=filter -> it isnt task
+      $scope.list.tasks .=filter -> it isnt task
+      $scope.list.$update!
 
     redirectToNewList: ->
        List.create {PreviousList: $scope._id}, (resource) -> (
@@ -84,7 +84,6 @@ mod.ListController = <[$scope List Task $location $routeParams $timeout]> +++ ($
            (response) -> console.log response
 
   $scope._id = $routeParams.listUuid
-  $scope.tasks = []
   # Defined before we call it
 
   if ($routeParams.listUuid == "")
@@ -94,7 +93,6 @@ mod.ListController = <[$scope List Task $location $routeParams $timeout]> +++ ($
     $scope.list = List.get {_id: $scope._id}, ((resource) ->
         unless resource
             $scope.redirectToNewList!
-        $scope.tasks = resource.tasks || []
         resource.CreatedAt = new Date(resource.CreatedAt)
         if resource.NextList
             $scope.nextList = List.get { _id: resource.NextList }, (nextResource) -> (
@@ -106,10 +104,10 @@ mod.ListController = <[$scope List Task $location $routeParams $timeout]> +++ ($
 
         ), (response) -> console.log response
 
-  Task.index {_List: $scope._id},  ((resource) ->
-      for {CompletedAt}:t in resource
-            t.CompletedAt = new Date CompletedAt if CompletedAt
-      $scope.tasks = resource
-      ), (response) -> console.log response
-
+#  Task.index {_List: $scope._id},  ((resource) ->
+#      for {CompletedAt}:t in resource
+#            t.CompletedAt = new Date CompletedAt if CompletedAt
+#      $scope.list.tasks = resource
+#      ), (response) -> console.log response
+#
 angular.module 'app.controllers' [] .controller mod

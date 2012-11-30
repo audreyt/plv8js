@@ -4,15 +4,15 @@
 <div class="row-fluid">
     <div class="span8">
         <div ng-show="!listFinalized()">
-	        <div ng-show="tasks.length">
+	        <div ng-show="list.tasks.length">
 	            <ng-include src="'partials/app/listTasks.html'"></ng-include>
 	        </div>
-	        <div ng-show="!tasks.length">
+	        <div ng-show="!list.tasks.length">
 	            <ng-include src="'partials/app/createTasks.html'"></ng-include>
             </div>
         </div>
         <div ng-show="listFinalized()">
-	        <div ng-show="tasks.length">
+	        <div ng-show="list.tasks.length">
 	            <ng-include src="'partials/app/listTasksFinalized.html'"></ng-include>
 	        </div>
 
