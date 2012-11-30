@@ -2,7 +2,7 @@
       <ul class="tasks">
           <li ng-repeat="task in tasks | filter:{AddedLater: false }" >
           <input class="toggle" type="checkbox" ng-model="task.Complete" disabled=disabled/>
-          <span ng-model="task.Description"/>
+          <span>{{task.Description}}</span>
         </li>
       </ul>
 <h2>Tasks you added later...</h2>
