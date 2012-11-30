@@ -15,7 +15,7 @@ mod.ListController = <[$scope List Task $location $routeParams $timeout]> +++ ($
         now = new Date(ms)
         output = ''
         output += $scope.pad2 now.getUTCHours! + ":" if now.getUTCHours!
-        output += $scope.pad2 now.getUTCMinutes! + ":"
+        output += $scope.pad2(now.getUTCMinutes!) + ":"
         output += $scope.pad2 now.getUTCSeconds!
         return output
 
