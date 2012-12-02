@@ -1,7 +1,7 @@
 mod = {}
 
 
-mod.ListController = <[$scope List Task $location $routeParams $timeout]> +++ ($scope, List, Task, $location, $routeParams, $timeout) ->
+mod.ListController = <[$scope List $location $routeParams $timeout]> +++ ($scope, List, $location, $routeParams, $timeout) ->
 
   $scope <<< do
     processList: (list) ->
@@ -90,7 +90,7 @@ mod.ListController = <[$scope List Task $location $routeParams $timeout]> +++ ($
       $scope.list.$update {}, ((resource) -> $scope.processList(resource))
 
     redirectToNewList: ->
-       List.create {PreviousList: $scope._id}, (resource) -> (
+       List.save {PreviousList: $scope._id}, (resource) -> (
            if $scope.list
                $scope.list.NextList = resource._id
                $scope.list.$update {}, ((resource) -> $scope.processList(resource))
