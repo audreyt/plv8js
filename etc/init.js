@@ -5,7 +5,7 @@ module = function(pathfilename){
   return this.exports = {};
 };
 require = function(modulename){
-  var filename, delim, c, prefixes, cwd, path_delim, dirar, i$, len$, prefix, rp, stats, fname, packageJson, __dirname, __filename, T, pos, m, body, fn;
+  var filename, delim, c, prefixes, cwd, path_delim, dirar, i$, len$, prefix, rp, stats, fname, packageJson, __dirname, __filename, T, pos, m, body, fn, oldCwd;
   filename = modulename;
   delim = require.path_delim;
   c = filename.charAt(0);
@@ -70,11 +70,13 @@ require = function(modulename){
       require.loading[rp] = m;
       body = native_fs_.readFileSync(T);
       fn = new Function('module', 'exports', '__dirname', '__filename', body);
+      oldCwd = native_fs_.getcwd();
       native_fs_.chdir(__dirname);
       m.exports = {};
       fn(m, m.exports, __dirname, __filename);
       require.loaded[rp] = m;
       require.loading[rp] = void 8;
+      native_fs_.chdir(oldCwd);
       return m.exports;
     case '.node':
       m = new module(T);

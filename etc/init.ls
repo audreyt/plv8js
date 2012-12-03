@@ -53,11 +53,13 @@ require = (modulename) ->
       body = native_fs_.readFileSync T
       fn = new Function \module \exports \__dirname \__filename body
       # XXX: shouldn't really chdir, but just calculate logic cwd for require caller
+      old-cwd = native_fs_.getcwd!
       native_fs_.chdir __dirname
       m.exports = {}
       fn m, m.exports, __dirname, __filename
       require.loaded[rp] = m
       require.loading[rp] = void
+      native_fs_.chdir old-cwd
       return m.exports
     | \.node
       m = new module T
