@@ -16,20 +16,34 @@ body {
 
 ul.tasks {
     list-style: none;
-}
-
-ul.tasks li {
+    margin-top: 1em;
+    margin-bottom: 1em;
+ li {
     font-size: 1.5em;
+    line-height: 1.7em;
+    &.complete {
+        color: @grayLight;
+        span {text-decoration: line-through; }
+    }
     i.icon {
     font-size: 0.7em;
+    line-height: 0.5em;
     vertical-align:text-bottom;
-    height: inherit;
-    line-height: inherit;
     color: #999;
-    &:hover {
-        color: @red;
-    text-decoration: none;
+    display:none;
     }
+    &:hover i.icon {
+    text-decoration: none;
+    display:inline-block;
+    }
+}
+}
+
+.later {
+    h3 { font-weight: bold; }
+    ul.tasks {
+        margin: 0;
+        font-size: 0.8em;
     }
 }
 
@@ -43,4 +57,23 @@ ul.tasks li {
 
 .navbar a {
     color: @white;
+}
+
+.list-header {
+        font-size: 2em;
+.clock {
+    display: inline-block;
+}
+.description {
+    .now {
+    color: @grayLight;
+    }
+    padding: 0.25em;
+}
+}
+
+.progress-wrapper {
+    .progress-status {
+    display: none;
+    }
 }

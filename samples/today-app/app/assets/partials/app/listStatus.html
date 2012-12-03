@@ -1,9 +1,9 @@
-<div class=list-header">
+<div class="list-header clearfix">
     <div ng-show="!tasksIncomplete().length ">
         <h2><i>Nothing left to do! Go you!</i></h2>
     </div>
     <div ng-show="tasksIncomplete().length ">
-        <h2><b>Next: {{tasksIncomplete()[0].Description}}</b></h2>
-        <div class="pull-right time">{{ clock }}</div>
+        <div class="description"><b>
+            <div class="clock">{{ clock }}</div> - {{tasksIncomplete()[0].Description}}</b></div>
     </div>
 </div>

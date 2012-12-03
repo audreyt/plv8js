@@ -1,4 +1,7 @@
-<span><small>Finished {{ initialTasksComplete().length }} of {{ initialTasks().length }} (+ {{ laterTasksComplete().length }} bonus)</small></span>
+<div class="progress-wrapper">
+    <h2>Progress</h2>
+    <span class="progress-status"><small>{{ initialTasksComplete().length }} of {{ initialTasks().length }} (+{{ laterTasksComplete().length }} bonus)</small></span>
 <div class="progress progress-striped">
     <div class="bar" style="width: {{initialTasksCompletePercentage()}}%;"></div>
+</div>
 </div>
