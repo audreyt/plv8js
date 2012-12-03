@@ -9,6 +9,16 @@ require = (modulename) ->
   c = filename.charAt 0
   prefixes = <[ /usr/local/plv8/plv8_modules/ /usr/local/plv8/lib/ ]>
   prefixes = [''] if c in <[ . / ]>
+  unless c in <[ . / ]>
+    cwd = native_fs_.getcwd!
+    # look for current package.json
+    {path_delim} = require
+    dirar = cwd.split path_delim
+    do
+      if native_fs_.statSync dirar.join(path_delim) + '/package.json' .is-file
+        prefixes.push (dirar +++ ['node_modules', '']).join path_delim
+    while dirar.pop!
+
   for prefix in prefixes
     rp = require.resolvePath "#prefix#filename"
     return require.loaded[rp].exports if require.loaded[rp]?

@@ -5,13 +5,23 @@ module = function(pathfilename){
   return this.exports = {};
 };
 require = function(modulename){
-  var filename, delim, c, prefixes, i$, len$, prefix, rp, stats, fname, packageJson, __dirname, __filename, T, pos, m, body, fn;
+  var filename, delim, c, prefixes, cwd, path_delim, dirar, i$, len$, prefix, rp, stats, fname, packageJson, __dirname, __filename, T, pos, m, body, fn;
   filename = modulename;
   delim = require.path_delim;
   c = filename.charAt(0);
   prefixes = ['/usr/local/plv8/plv8_modules/', '/usr/local/plv8/lib/'];
   if (c == '.' || c == '/') {
     prefixes = [''];
+  }
+  if (c != '.' && c != '/') {
+    cwd = native_fs_.getcwd();
+    path_delim = require.path_delim;
+    dirar = cwd.split(path_delim);
+    do {
+      if (native_fs_.statSync(dirar.join(path_delim) + '/package.json').isFile) {
+        prefixes.push((dirar.concat(['node_modules', ''])).join(path_delim));
+      }
+    } while (dirar.pop());
   }
   for (i$ = 0, len$ = prefixes.length; i$ < len$; ++i$) {
     prefix = prefixes[i$];
