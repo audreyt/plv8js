@@ -10,7 +10,7 @@ require = function(modulename){
   delim = require.path_delim;
   c = filename.charAt(0);
   prefixes = ['/usr/local/plv8/plv8_modules/', '/usr/local/plv8/lib/'];
-  if ((c == '.' || c == '/') || ~filename.indexOf(delim)) {
+  if (c == '.' || c == '/') {
     prefixes = [''];
   }
   for (i$ = 0, len$ = prefixes.length; i$ < len$; ++i$) {

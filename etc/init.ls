@@ -8,7 +8,7 @@ require = (modulename) ->
   delim = require.path_delim
   c = filename.charAt 0
   prefixes = <[ /usr/local/plv8/plv8_modules/ /usr/local/plv8/lib/ ]>
-  prefixes = [''] if c in <[ . / ]> or ~filename.indexOf(delim)
+  prefixes = [''] if c in <[ . / ]>
   for prefix in prefixes
     rp = require.resolvePath "#prefix#filename"
     return require.loaded[rp].exports if require.loaded[rp]?
