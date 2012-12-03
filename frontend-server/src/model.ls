@@ -10,9 +10,17 @@ modelmeta = do
         isFinalized:        $: CreatedAt: $gt: $ago: 18hr * 3600s * 1000ms
 
 initmodels = (cb) ->
-    {USER} = process.env
+    dialect = 'postgres'
     {STRING, TEXT, DATE, BOOLEAN, INTEGER}:Sequelize = require \sequelize
-    sql = new Sequelize USER, USER, null, dialect: 'postgres', host: \127.0.0.1, port: 5432
+    if plv8?
+        plv8.elog INFO, "entering plv8"
+        USER = null
+        dialect = 'plv8'
+        sql = new Sequelize USER, USER, null, {dialect}
+        return cb!
+    else
+        {USER} = process.env
+    sql = new Sequelize USER, USER, null, {dialect, host: \127.0.0.1, port: 5432}
 
     @ <<< do
         UUID: -> type: STRING, isUUID: 4
@@ -44,11 +52,12 @@ initmodels = (cb) ->
 
     List.hasMany Task, { as: \tasks, foreignKey: \_List, -useJunctionTable }
     List.userDefinedAttributes = walk \List modelmeta
-    new Sequelize.Utils.QueryChainer!
-        .add List.sync!
-        .add Task.sync!
-        .run-serially!
-        .success cb
+    unless plv8?
+        new Sequelize.Utils.QueryChainer!
+            .add List.sync!
+            .add Task.sync!
+            .run-serially!
+            .success cb
 
     { List, Task }
 

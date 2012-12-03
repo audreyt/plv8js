@@ -184,6 +184,8 @@ serveResponseFromPg = ({ headers, type, statusCode, body }) ->
 # It's stringified and injected into postgres during startup.
 rest = ->
     req = JSON.parse it
+    # link frontend-server/lib into plv8_modules/today
+    models = {List, Task} = (<~ require \today/model .initmodels)
     result = plv8.execute req.query.q if req.query.q?
     JSON.stringify do
         status-code: 200
