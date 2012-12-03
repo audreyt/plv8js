@@ -7,8 +7,8 @@
 	        <div ng-show="list.tasks.length">
 	            <ng-include src="'partials/app/listTasks.html'"></ng-include>
 	        </div>
-	        <div ng-show="!list.tasks.length">
-	            <ng-include src="'partials/app/createTasks.html'"></ng-include>
+            <div ng-show="!list.tasks.length">
+                    <ng-include src="'partials/app/createTasks.html'"></ng-include>
             </div>
         </div>
         <div ng-show="listFinalized()">
@@ -18,7 +18,7 @@
 
         </div>
     </div>
-    <div class="offset8 span4">
+    <div class="span4">
         <ng-include src="'partials/app/listSidebar.html'"></ng-include>
     </div>
 </div>

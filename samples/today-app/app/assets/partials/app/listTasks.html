@@ -1,18 +1,18 @@
 <ng-include src="'partials/app/listStatus.html'"></ng-include>
 
-<h2>Tasks!</h2>
+<h2>To do today</h2>
       <ul class="tasks">
           <li ng-repeat="task in list.tasks | filter:{AddedLater: false }" >
         <input class="toggle" type="checkbox" ng-model="task.Complete" ng-change="updateTask(task)"/>
-        <input type="text" ng-model="task.Description" ng-blur="updateTask(task)">
-        <button ng-click="destroyTask(task)"><i class="icon-delete">Delete</i></button>
+          <span class="taskDescription">{{task.Description}}</span>
+        <a ng-click="destroyTask(task)"><i class="icon icon-trash"></i></i></a>
         </li>
       </ul>
 <h2>Tasks you added later...</h2>
       <ul class="tasks">
           <li ng-repeat="task in list.tasks | filter:{AddedLater: true }" >
-        <input class="toggle" type="checkbox" ng-model="task.Complete" ng-change="updateTask(task)"/>
-        <input type="text" ng-model="task.Description" ng-blur="updateTask(task)">
-        <button ng-click="destroyTask(task)"><i class="icon-delete">Delete</i></button>
+          <input class="toggle" type="checkbox" ng-model="task.Complete" ng-change="updateTask(task)"/>
+          <span class="taskDescription">{{task.Description}}</span>
+        <a ng-click="destroyTask(task)"><i class="icon icon-trash"></i></a>
         </li>
       </ul>

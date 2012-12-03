@@ -50,7 +50,7 @@ mod.ListController = <[$scope List $location $routeParams $timeout]> +++ ($scope
         1000ms
 
     initialTasksCompletePercentage: ->
-      100 * ( $scope.initialTasksComplete!length / $scope.initialTasks!length)
+      Math.max  1, 100 * ( $scope.initialTasksComplete!length / $scope.initialTasks!length)
 
     initialTasks: ->
       $scope.list.tasks.filter -> !it.AddedLater
@@ -62,10 +62,7 @@ mod.ListController = <[$scope List $location $routeParams $timeout]> +++ ($scope
       $scope.list.tasks.filter -> it.Complete and it.AddedLater
 
     tasksIncomplete: ->
-      rv = $scope.list.tasks.filter -> not it.Complete
-      console.log "TInc: #rv with #{ rv.length }"
-      console.log rv
-      return rv
+      $scope.list.tasks.filter -> not it.Complete
 
     tasksComplete: ->
       $scope.list.tasks.filter -> it.Complete

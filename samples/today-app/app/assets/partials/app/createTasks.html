@@ -1,11 +1,12 @@
 <form ng-submit="addTasks(initialTasksToAdd); initialTasksToAdd=''">
     <span class="add-items">
-     <div class="instructions">Type in one item per line.
-      <b>If you think a task might take more than twenty minutes, split it into a few parts.</b>
+        <div class="instructions lead">Type in <b>one item</b> per line.
+         If you think a task might take more than <b>twenty minutes</b>, split it
+             into <b>a few parts.</b>
      </div>
-<div class="controls"><textarea  rows="5" cols="60" class="widget argument-content" ng-model="initialTasksToAdd"></textarea>
+<div class="controls"><textarea  rows="8"  class="initial-tasks-create span12" ng-model="initialTasksToAdd" autofocus="autofocus"></textarea>
 </div></div>
-<div class="controls"><input type="submit" value="Add" class="widget btn btn-primary button">
+<div class="controls"><input type="submit" value="Get started!" class="btn-large btn btn-primary pull-right">
 </div>
 
     </span>
