@@ -33,7 +33,10 @@ require = (modulename) ->
       __dirname = rp
       __filename = package-json.main
       T = "#rp/#delim#__filename"
-      T += '.js' if T isnt /\.js$/
+      if native_fs_.statSync T .is-directory
+          T += '/index.js'
+      else
+          T += '.js' if T isnt /\.js$/
     | stats.isFile
       T = rp
     | native_fs_.existsSync "#rp.js"

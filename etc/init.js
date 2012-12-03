@@ -43,8 +43,12 @@ require = function(modulename){
       __dirname = rp;
       __filename = packageJson.main;
       T = rp + "/" + delim + __filename;
-      if (!/\.js$/.test(T)) {
-        T += '.js';
+      if (native_fs_.statSync(T).isDirectory) {
+        T += '/index.js';
+      } else {
+        if (!/\.js$/.test(T)) {
+          T += '.js';
+        }
       }
       break;
     case !stats.isFile:
