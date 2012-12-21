@@ -132,7 +132,8 @@ extern const unsigned char livescript_binary_data[];
  * lower_case_functions are postgres-like C functions.
  * They could raise errors with elog/ereport(ERROR).
  */
-static plv8_proc *plv8_get_proc(Oid fn_oid, MemoryContext fn_mcxt, bool validate, char ***argnames) throw();
+static plv8_proc *plv8_get_proc(Oid fn_oid, FunctionCallInfo fcinfo,
+		bool validate, char ***argnames) throw();
 static void plv8_xact_cb(XactEvent event, void *arg);
 
 /*
@@ -140,7 +141,7 @@ static void plv8_xact_cb(XactEvent event, void *arg);
  * They could raise errors with C++ throw statements, or never throw exceptions.
  */
 static plv8_exec_env *CreateExecEnv(Handle<Function> script);
-static plv8_proc *Compile(Oid fn_oid, MemoryContext fn_mcxt,
+static plv8_proc *Compile(Oid fn_oid, FunctionCallInfo fcinfo,
 					bool validate, bool is_trigger, Dialect dialect);
 static Local<Function> CompileFunction(const char *proname, int proarglen,
 					const char *proargs[], const char *prosrc,
@@ -155,11 +156,35 @@ static Persistent<ObjectTemplate> GetGlobalObjectTemplate();
 
 /* A GUC to specify a custom start up function to call */
 static char *plv8_start_proc = NULL;
+
+/* A GUC to specify the remote debugger port */
+static int plv8_debugger_port;
 /*
  * We use vector instead of hash since the size of this array
  * is expected to be short in most cases.
  */
 static std::vector<plv8_context *> ContextVector;
+
+#ifdef ENABLE_DEBUGGER_SUPPORT
+v8::Persistent<v8::Context> debug_message_context;
+
+void DispatchDebugMessages() {
+  // We are in some random thread. We should already have v8::Locker acquired
+  // (we requested this when registered this callback). We was called
+  // because new debug messages arrived; they may have already been processed,
+  // but we shouldn't worry about this.
+  //
+  // All we have to do is to set context and call ProcessDebugMessages.
+  //
+  // We should decide which V8 context to use here. This is important for
+  // "evaluate" command, because it must be executed some context.
+  // In our sample we have only one context, so there is nothing really to
+  // think about.
+  v8::Context::Scope scope(debug_message_context);
+
+  v8::Debug::ProcessDebugMessages();
+}
+#endif  // ENABLE_DEBUGGER_SUPPORT
 
 void
 _PG_init(void)
@@ -183,6 +208,19 @@ _PG_init(void)
 #endif
 							   NULL,
 							   NULL);
+
+	DefineCustomIntVariable("plv8.debugger_port",
+							gettext_noop("V8 remote debug port."),
+							gettext_noop("The default value is 35432.  "
+										 "This is effective only if PLV8 is built with ENABLE_DEBUGGER_SUPPORT."),
+							&plv8_debugger_port,
+							35432, 0, 65536,
+							PGC_USERSET, 0,
+#if PG_VERSION_NUM >= 90100
+							NULL,
+#endif
+							NULL,
+							NULL);
 
 	RegisterXactCallback(plv8_xact_cb, NULL);
 
@@ -236,11 +274,14 @@ common_pl_call_handler(PG_FUNCTION_ARGS, Dialect dialect) throw()
 
 	try
 	{
+#ifdef ENABLE_DEBUGGER_SUPPORT
+		Locker				lock;
+#endif  // ENABLE_DEBUGGER_SUPPORT
 		HandleScope	handle_scope;
 
 		if (!fcinfo->flinfo->fn_extra)
 		{
-			plv8_proc	   *proc = Compile(fn_oid, fcinfo->flinfo->fn_mcxt,
+			plv8_proc	   *proc = Compile(fn_oid, fcinfo,
 										   false, is_trigger, dialect);
 			proc->xenv = CreateExecEnv(proc->cache->function);
 			fcinfo->flinfo->fn_extra = proc;
@@ -292,6 +333,9 @@ common_pl_inline_handler(PG_FUNCTION_ARGS, Dialect dialect) throw()
 
 	try
 	{
+#ifdef ENABLE_DEBUGGER_SUPPORT
+		Locker				lock;
+#endif  // ENABLE_DEBUGGER_SUPPORT
 		HandleScope			handle_scope;
 		char			   *source_text = codeblock->source_text;
 
@@ -357,9 +401,29 @@ CallFunction(PG_FUNCTION_ARGS, plv8_exec_env *xenv,
 	Handle<Context>		context = xenv->context;
 	Context::Scope		context_scope(context);
 	Handle<v8::Value>	args[FUNC_MAX_ARGS];
+	Handle<Object>		plv8obj;
 
-	for (int i = 0; i < nargs; i++)
-		args[i] = ToValue(fcinfo->arg[i], fcinfo->argnull[i], &argtypes[i]);
+	WindowFunctionSupport support(context, fcinfo);
+
+	/*
+	 * In window function case, we cannot see the argument datum
+	 * in fcinfo.  Instead, get them by WinGetFuncArgCurrent().
+	 */
+	if (support.IsWindowCall())
+	{
+		WindowObject winobj = support.GetWindowObject();
+		for (int i = 0; i < nargs; i++)
+		{
+			bool isnull;
+			Datum arg = WinGetFuncArgCurrent(winobj, i, &isnull);
+			args[i] = ToValue(arg, isnull, &argtypes[i]);
+		}
+	}
+	else
+	{
+		for (int i = 0; i < nargs; i++)
+			args[i] = ToValue(fcinfo->arg[i], fcinfo->argnull[i], &argtypes[i]);
+	}
 
 	Local<Function>		fn =
 		Local<Function>::Cast(xenv->recv->GetInternalField(0));
@@ -446,24 +510,12 @@ CallSRFunction(PG_FUNCTION_ARGS, plv8_exec_env *xenv,
 	Context::Scope		context_scope(context);
 	Converter			conv(tupdesc, proc->functypclass == TYPEFUNC_SCALAR);
 	Handle<v8::Value>	args[FUNC_MAX_ARGS + 1];
-	Handle<Object>		plv8obj = Handle<Object>::Cast(
-			context->Global()->Get(String::NewSymbol("plv8")));
 
 	/*
 	 * In case this is nested via SPI, stash pre-registered converters
 	 * for the previous SRF.
 	 */
-	Handle<v8::Value>	conv_prev, tupstore_prev;
-	if (!plv8obj->GetInternalField(PLV8_INTNL_CONV).IsEmpty())
-	{
-		conv_prev = plv8obj->GetInternalField(PLV8_INTNL_CONV);
-		tupstore_prev = plv8obj->GetInternalField(PLV8_INTNL_TUPSTORE);
-	}
-	/*
-	 * Setup return_next information
-	 */
-	plv8obj->SetInternalField(PLV8_INTNL_CONV, External::Wrap(&conv));
-	plv8obj->SetInternalField(PLV8_INTNL_TUPSTORE, External::Wrap(tupstore));
+	SRFSupport support(context, &conv, tupstore);
 
 	for (int i = 0; i < nargs; i++)
 		args[i] = ToValue(fcinfo->arg[i], fcinfo->argnull[i], &argtypes[i]);
@@ -471,14 +523,7 @@ CallSRFunction(PG_FUNCTION_ARGS, plv8_exec_env *xenv,
 	Local<Function>		fn =
 		Local<Function>::Cast(xenv->recv->GetInternalField(0));
 
-	Handle<v8::Value> result =
-		DoCall(fn, xenv->recv, nargs, args);
-
-	/*
-	 * Restore old information.
-	 */
-	plv8obj->SetInternalField(PLV8_INTNL_CONV, conv_prev);
-	plv8obj->SetInternalField(PLV8_INTNL_TUPSTORE, tupstore_prev);
+	Handle<v8::Value> result = DoCall(fn, xenv->recv, nargs, args);
 
 	if (result->IsUndefined())
 	{
@@ -615,8 +660,16 @@ CallTrigger(PG_FUNCTION_ARGS, plv8_exec_env *xenv)
 	if (newtup.IsEmpty())
 		throw js_error(try_catch);
 
-	if (TRIGGER_FIRED_BY_UPDATE(event) &&
-			!(newtup->IsUndefined() || newtup->IsNull()))
+	/*
+	 * If the function specifically returned null, return NULL to
+	 * tell executor to skip the operation.  Otherwise, the function
+	 * result is the tuple to be returned.
+	 */
+	if (newtup->IsNull() || !TRIGGER_FIRED_FOR_ROW(event))
+	{
+		result = PointerGetDatum(NULL);
+	}
+	else if (!newtup->IsUndefined())
 	{
 		TupleDesc		tupdesc = RelationGetDescr(rel);
 		Converter		conv(tupdesc);
@@ -649,7 +702,7 @@ common_pl_call_validator(PG_FUNCTION_ARGS, Dialect dialect) throw()
 	functyptype = get_typtype(proc->prorettype);
 
 	/* Disallow pseudotype result */
-	/* except for TRIGGER, RECORD, or VOID */
+	/* except for TRIGGER, RECORD, INTERNAL, VOID or polymorphic types */
 	if (functyptype == TYPTYPE_PSEUDO)
 	{
 		/* we assume OPAQUE with no arguments means a trigger */
@@ -657,7 +710,9 @@ common_pl_call_validator(PG_FUNCTION_ARGS, Dialect dialect) throw()
 			(proc->prorettype == OPAQUEOID && proc->pronargs == 0))
 			is_trigger = true;
 		else if (proc->prorettype != RECORDOID &&
-			proc->prorettype != VOIDOID)
+			proc->prorettype != VOIDOID &&
+			proc->prorettype != INTERNALOID &&
+			!IsPolymorphicType(proc->prorettype))
 			ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("PL/v8 functions cannot return type %s",
@@ -668,7 +723,11 @@ common_pl_call_validator(PG_FUNCTION_ARGS, Dialect dialect) throw()
 
 	try
 	{
-		plv8_proc	   *proc = Compile(fn_oid, fcinfo->flinfo->fn_mcxt,
+#ifdef ENABLE_DEBUGGER_SUPPORT
+		Locker				lock;
+#endif  // ENABLE_DEBUGGER_SUPPORT
+		/* Don't use validator's fcinfo */
+		plv8_proc	   *proc = Compile(fn_oid, NULL,
 									   true, is_trigger, dialect);
 		(void) CreateExecEnv(proc->cache->function);
 		/* the result of a validator is ignored */
@@ -699,7 +758,7 @@ plls_call_validator(PG_FUNCTION_ARGS) throw()
 }
 
 static plv8_proc *
-plv8_get_proc(Oid fn_oid, MemoryContext fn_mcxt, bool validate, char ***argnames) throw()
+plv8_get_proc(Oid fn_oid, FunctionCallInfo fcinfo, bool validate, char ***argnames) throw()
 {
 	HeapTuple			procTup;
 	plv8_proc_cache	   *cache;
@@ -775,10 +834,16 @@ plv8_get_proc(Oid fn_oid, MemoryContext fn_mcxt, bool validate, char ***argnames
 
 		if (validate)
 		{
-			/* Disallow pseudotypes in arguments (either IN or OUT) */
+			/*
+			 * Disallow non-polymorphic pseudotypes in arguments
+			 * (either IN or OUT).  Internal type is used to declare
+			 * js functions for find_function().
+			 */
 			for (int i = 0; i < nargs; i++)
 			{
-				if (get_typtype(argtypes[i]) == TYPTYPE_PSEUDO)
+				if (get_typtype(argtypes[i]) == TYPTYPE_PSEUDO &&
+						argtypes[i] != INTERNALOID &&
+						!IsPolymorphicType(argtypes[i]))
 					ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("PL/v8 functions cannot accept type %s",
@@ -816,13 +881,28 @@ plv8_get_proc(Oid fn_oid, MemoryContext fn_mcxt, bool validate, char ***argnames
 		cache->nargs = inargs;
 	}
 
-	plv8_proc *proc = (plv8_proc *) MemoryContextAllocZero(fn_mcxt,
+	MemoryContext mcxt = CurrentMemoryContext;
+	if (fcinfo)
+		mcxt = fcinfo->flinfo->fn_mcxt;
+
+	plv8_proc *proc = (plv8_proc *) MemoryContextAllocZero(mcxt,
 		offsetof(plv8_proc, argtypes) + sizeof(plv8_type) * cache->nargs);
 
 	proc->cache = cache;
 	for (int i = 0; i < cache->nargs; i++)
-		plv8_fill_type(&proc->argtypes[i], cache->argtypes[i], fn_mcxt);
-	plv8_fill_type(&proc->rettype, cache->rettype, fn_mcxt);
+	{
+		Oid		argtype = cache->argtypes[i];
+		/* Resolve polymorphic types, if this is an actual call context. */
+		if (fcinfo && IsPolymorphicType(argtype))
+			argtype = get_fn_expr_argtype(fcinfo->flinfo, i);
+		plv8_fill_type(&proc->argtypes[i], argtype, mcxt);
+	}
+
+	Oid		rettype = cache->rettype;
+	/* Resolve polymorphic return type if this is an actual call context. */
+	if (fcinfo && IsPolymorphicType(rettype))
+		rettype = get_fn_expr_rettype(fcinfo->flinfo);
+	plv8_fill_type(&proc->rettype, rettype, mcxt);
 
 	return proc;
 }
@@ -929,15 +1009,20 @@ CompileDialect(const char *src, Dialect dialect)
 	return cresult;
 }
 
+/*
+ * fcinfo should be passed if this is an actual function call context, where
+ * we can resolve polymorphic types and use function's memory context.
+ */
 static plv8_proc *
-Compile(Oid fn_oid, MemoryContext fn_mcxt, bool validate, bool is_trigger, Dialect dialect)
+Compile(Oid fn_oid, FunctionCallInfo fcinfo, bool validate, bool is_trigger,
+		Dialect dialect)
 {
 	plv8_proc  *proc;
 	char	  **argnames;
 
 	PG_TRY();
 	{
-		proc = plv8_get_proc(fn_oid, fn_mcxt, validate, &argnames);
+		proc = plv8_get_proc(fn_oid, fcinfo, validate, &argnames);
 	}
 	PG_CATCH();
 	{
@@ -1075,7 +1160,7 @@ find_js_function(Oid fn_oid)
 
 	try
 	{
-		plv8_proc		   *proc = Compile(fn_oid,CurrentMemoryContext,
+		plv8_proc		   *proc = Compile(fn_oid, NULL,
 										   true, false,
 										   (Dialect) (PLV8_DIALECT_NONE + langno));
 
@@ -1228,6 +1313,16 @@ GetGlobalContext()
 					throw js_error(try_catch);
 			}
 		}
+
+#ifdef ENABLE_DEBUGGER_SUPPORT
+		debug_message_context = v8::Persistent<v8::Context>::New(global_context);
+
+		v8::Locker locker;
+
+		v8::Debug::SetDebugMessageDispatchHandler(DispatchDebugMessages, true);
+
+		v8::Debug::EnableAgent("plv8", plv8_debugger_port, false);
+#endif  // ENABLE_DEBUGGER_SUPPORT
 	}
 
 	return global_context;
@@ -1265,6 +1360,16 @@ GetGlobalObjectTemplate()
 	}
 
 	return global;
+}
+
+/*
+ * Accessor to plv8_type stored in fcinfo.
+ */
+plv8_type *
+get_plv8_type(PG_FUNCTION_ARGS, int argno)
+{
+	plv8_proc *proc = (plv8_proc *) fcinfo->flinfo->fn_extra;
+	return &proc->argtypes[argno];
 }
 
 Converter::Converter(TupleDesc tupdesc) :
