@@ -173,6 +173,27 @@ $$
 LANGUAGE plv8;
 SELECT one_out(123);
 
+-- polymorphic types
+CREATE FUNCTION polymorphic(poly anyarray) returns anyelement AS
+$$
+    return poly[0];
+$$
+LANGUAGE plv8;
+SELECT polymorphic(ARRAY[10, 11]), polymorphic(ARRAY['foo', 'bar']);
+
+-- typed array
+CREATE FUNCTION fastsum(ary plv8_int4array) RETURNS int8 AS
+$$
+    sum = 0;
+    for (var i = 0; i < ary.length; i++) {
+      sum += ary[i];
+    }
+    return sum;
+$$
+LANGUAGE plv8 IMMUTABLE STRICT;
+SELECT fastsum(ARRAY[1, 2, 3, 4, 5]);
+SELECT fastsum(ARRAY[NULL, 2]);
+
 -- elog()
 CREATE FUNCTION test_elog(arg text) RETURNS void AS
 $$
@@ -294,6 +315,48 @@ INSERT INTO test_tbl VALUES(100, 'ABC');
 UPDATE test_tbl SET i = 101, s = 'DEF' WHERE i = 1;
 DELETE FROM test_tbl WHERE i >= 100;
 SELECT * FROM test_tbl;
+
+-- One more trigger
+CREATE FUNCTION test_trigger2() RETURNS trigger AS
+$$
+	var tuple;
+	switch (TG_OP) {
+	case "INSERT":
+		tuple = NEW;
+		break;
+	case "UPDATE":
+		tuple = OLD;
+		break;
+	case "DELETE":
+		tuple = OLD;
+		break;
+	default:
+		return;
+	}
+	if (tuple.subject == "skip") {
+		return null;
+	}
+	if (tuple.subject == "modify" && NEW) {
+		NEW.val = tuple.val * 2;
+		return NEW;
+	}
+$$
+LANGUAGE "plv8";
+
+CREATE TABLE trig_table (subject text, val int);
+INSERT INTO trig_table VALUES('skip', 1);
+CREATE TRIGGER test_trigger2
+  BEFORE INSERT OR UPDATE OR DELETE
+  ON trig_table FOR EACH ROW
+  EXECUTE PROCEDURE test_trigger2();
+
+INSERT INTO trig_table VALUES
+  ('skip', 1), ('modify', 2), ('noop', 3);
+SELECT * FROM trig_table;
+UPDATE trig_table SET val = 10;
+SELECT * FROM trig_table;
+DELETE FROM trig_table;
+SELECT * FROM trig_table;
 
 -- ERRORS
 CREATE FUNCTION syntax_error() RETURNS text AS '@' LANGUAGE plv8;

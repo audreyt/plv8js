@@ -23,6 +23,7 @@ extern "C" {
 #include "utils/datetime.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
 #include "utils/typcache.h"
 
 #undef delete
@@ -59,6 +60,54 @@ plv8_fill_type(plv8_type *type, Oid typid, MemoryContext mcxt)
 	type->fn_input.fn_mcxt = type->fn_output.fn_mcxt = mcxt;
 	get_type_category_preferred(typid, &type->category, &ispreferred);
 	get_typlenbyvalalign(typid, &type->len, &type->byval, &type->align);
+
+	if (get_typtype(typid) == TYPTYPE_DOMAIN)
+	{
+		HeapTuple	tp;
+		Form_pg_type typtup;
+
+#if PG_VERSION_NUM < 90100
+		tp = SearchSysCache(TYPEOID, ObjectIdGetDatum(typid), 0, 0, 0);
+#else
+		tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
+#endif
+		if (HeapTupleIsValid(tp))
+		{
+			/*
+			 * Check if the type is the external array types.
+			 */
+			typtup = (Form_pg_type) GETSTRUCT(tp);
+			if (strcmp(NameStr(typtup->typname),
+						"plv8_int2array") == 0)
+			{
+				type->ext_array = kExternalShortArray;
+			}
+			else if (strcmp(NameStr(typtup->typname),
+						"plv8_int4array") == 0)
+			{
+				type->ext_array = kExternalIntArray;
+			}
+			else if (strcmp(NameStr(typtup->typname),
+						"plv8_float4array") == 0)
+			{
+				type->ext_array = kExternalFloatArray;
+			}
+			else if (strcmp(NameStr(typtup->typname),
+						"plv8_float8array") == 0)
+			{
+				type->ext_array = kExternalDoubleArray;
+			}
+
+			ReleaseSysCache(tp);
+		}
+		else
+			elog(ERROR, "cache lookup failed for type %d", typid);
+
+		if (type->ext_array)
+			return;
+
+		/* If not, do as usual. */
+	}
 
 	if (type->category == TYPCATEGORY_ARRAY)
 	{
@@ -101,6 +150,70 @@ inferred_datum_type(Handle<v8::Value> value)
 */
 
 	return InvalidOid;
+}
+
+static Local<Object>
+CreateExternalArray(void *data, ExternalArrayType array_type, int byte_size,
+					Datum datum)
+{
+	static Persistent<ObjectTemplate> externalArray;
+
+	if (externalArray.IsEmpty())
+	{
+		externalArray = Persistent<ObjectTemplate>::New(ObjectTemplate::New());
+		externalArray->SetInternalFieldCount(1);
+	}
+
+	Local<Object> array = externalArray->NewInstance();
+	int		length;
+
+	switch (array_type)
+	{
+	case kExternalByteArray:
+	case kExternalUnsignedByteArray:
+		length = byte_size;
+		break;
+	case kExternalShortArray:
+	case kExternalUnsignedShortArray:
+		length = byte_size / sizeof(int16);
+		break;
+	case kExternalIntArray:
+	case kExternalUnsignedIntArray:
+		length = byte_size / sizeof(int32);
+		break;
+	case kExternalFloatArray:
+		length = byte_size / sizeof(float4);
+		break;
+	case kExternalDoubleArray:
+		length = byte_size / sizeof(float8);
+		break;
+	default:
+		throw js_error("unexpected array type");
+	}
+	array->SetIndexedPropertiesToExternalArrayData(
+			data, array_type, length);
+	array->Set(String::New("length"), Int32::New(length), ReadOnly);
+	array->SetInternalField(0, External::Wrap(DatumGetPointer(datum)));
+
+	return array;
+}
+
+static void *
+ExtractExternalArrayDatum(Handle<v8::Value> value)
+{
+	if (value->IsUndefined() || value->IsNull())
+		return NULL;
+
+	if (value->IsObject())
+	{
+		Handle<Object> object = Handle<Object>::Cast(value);
+		if (object->GetIndexedPropertiesExternalArrayData())
+		{
+			return External::Unwrap(object->GetInternalField(0));
+		}
+	}
+
+	return NULL;
 }
 
 Datum
@@ -179,6 +292,27 @@ ToScalarDatum(Handle<v8::Value> value, bool *isnull, plv8_type *type)
 		if (value->IsDate())
 			return EpochToTimestampTz(value->NumberValue());
 		break;
+	case BYTEAOID:
+		{
+			void *datum_p = ExtractExternalArrayDatum(value);
+			if (datum_p)
+			{
+				return PointerGetDatum(datum_p);
+			}
+		}
+#if PG_VERSION_NUM >= 90200
+	case JSONOID:
+		if (value->IsObject() || value->IsArray())
+		{
+			JSONObject JSON;
+
+			Handle<v8::Value> result = JSON.Stringify(value);
+			CString str(result);
+
+			return CStringGetTextDatum(str);
+		}
+		break;
+#endif
 	}
 
 	/* Use lexical cast for non-numeric types. */
@@ -219,6 +353,13 @@ ToArrayDatum(Handle<v8::Value> value, bool *isnull, plv8_type *type)
 	{
 		*isnull = true;
 		return (Datum) 0;
+	}
+
+	void *datum_p = ExtractExternalArrayDatum(value);
+	if (datum_p)
+	{
+		*isnull = false;
+		return PointerGetDatum(datum_p);
 	}
 
 	Handle<Array> array(Handle<Array>::Cast(value));
@@ -328,6 +469,31 @@ ToScalarValue(Datum datum, bool isnull, plv8_type *type)
 			pfree(p);	// free if detoasted
 		return result;
 	}
+	case BYTEAOID:
+	{
+		void	   *p = PG_DETOAST_DATUM_COPY(datum);
+
+		return CreateExternalArray(VARDATA_ANY(p),
+								   kExternalUnsignedByteArray,
+								   VARSIZE_ANY_EXHDR(p),
+								   PointerGetDatum(p));
+	}
+#if PG_VERSION_NUM >= 90200
+	case JSONOID:
+	{
+		void	   *p = PG_DETOAST_DATUM_PACKED(datum);
+		const char *str = VARDATA_ANY(p);
+		int			len = VARSIZE_ANY_EXHDR(p);
+
+		Local<v8::Value>	jsonString = ToString(str, len);
+		JSONObject JSON;
+		Local<v8::Value> result = Local<v8::Value>::New(JSON.Parse(jsonString));
+
+		if (p != DatumGetPointer(datum))
+			pfree(p);	// free if detoasted
+		return result;
+	}
+#endif
 	default:
 		return ToString(datum, type);
 	}
@@ -339,6 +505,30 @@ ToArrayValue(Datum datum, bool isnull, plv8_type *type)
 	Datum	   *values;
 	bool	   *nulls;
 	int			nelems;
+
+	/*
+	 * If we can use an external array, do it instead.
+	 */
+	if (type->ext_array)
+	{
+		ArrayType   *array = DatumGetArrayTypePCopy(datum);
+
+		/*
+		 * We allow only non-NULL, 1-dim array.
+		 */
+		if (!ARR_HASNULL(array) && ARR_NDIM(array) <= 1)
+		{
+			int			data_bytes = ARR_SIZE(array) -
+										ARR_OVERHEAD_NONULLS(1);
+			return CreateExternalArray(ARR_DATA_PTR(array),
+									   type->ext_array,
+									   data_bytes,
+									   PointerGetDatum(array));
+		}
+
+		throw js_error("NULL element, or multi-dimension array not allowed"
+						" in external array type");
+	}
 
 	deconstruct_array(DatumGetArrayTypeP(datum),
 						type->typid, type->len, type->byval, type->align,

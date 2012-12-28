@@ -2,21 +2,17 @@
 #
 # Makefile for plv8
 #
-# @param V8_SRCDIR path to V8 source directory, used for include files
-# @param V8_OUTDIR path to V8 output directory, used for library files
-# @param V8_STATIC_SNAPSHOT if defined, statically link to v8 with snapshot
-# @param V8_STATIC_NOSNAPSHOT if defined, statically link to v8 w/o snapshot
 # @param DISABLE_DIALECT if defined, not build dialects (i.e. plcoffee, etc)
+# @param ENABLE_DEBUGGER_SUPPORT enables v8 deubbger agent
 #
-# There are three ways to build plv8.
+# There are two ways to build plv8.
 # 1. Dynamic link to v8 (default)
-# 2. Static link to v8 with snapshot, if V8_STATIC_SNAPSHOT is defined
-# 3. Static link to v8 w/o snapshot, if V8_STATIC_NOSNAPSHOT is defined
-# In either case, V8_OUTDIR should point to the v8 output directory (such as
-# $(HOME)/v8/out/native) if linker doesn't find it automatically.
+#   You need to have libv8.so and header file installed.
+# 2. Static link to v8 with snapshot
+#   'make static' will download v8 and build, then statically link to it.
 #
 #-----------------------------------------------------------------------------#
-PLV8_VERSION = 1.3.0devel
+PLV8_VERSION = 1.3.0
 
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
@@ -40,47 +36,27 @@ DATA += plcoffee.control plcoffee--$(PLV8_VERSION).sql \
 		plls.control plls--$(PLV8_VERSION).sql
 endif
 DATA_built = plv8.sql
-REGRESS = init-extension plv8 inline json startup_pre startup varparam
+REGRESS = init-extension plv8 inline json startup_pre startup varparam json_conv \
+		  window
 ifndef DISABLE_DIALECT
 REGRESS += dialect
 endif
-
-# V8 build options.  See the top comment.
-V8_STATIC_SNAPSHOT_LIBS = libv8_base.a libv8_snapshot.a
-V8_STATIC_NOSNAPSHOT_LIBS = libv8_base.a libv8_nosnapshot.a
-ifdef V8_STATIC_SNAPSHOT
-  ifdef V8_OUTDIR
-SHLIB_LINK += $(addprefix $(V8_OUTDIR)/, $(V8_STATIC_SNAPSHOT_LIBS))
-  else
-SHLIB_LINK += $(V8_STATIC_SNAPSHOT_LIBS)
-  endif
-else
-  ifdef V8_STATIC_NOSNAPSHOT
-    ifdef V8_OUTDIR
-SHLIB_LINK += $(addprefix $(V8_OUTDIR)/, $(V8_STATIC_NOSNAPSHOT_LIBS))
-    else
-SHLIB_LINK += $(V8_STATIC_NOSNAPSHOT_LIBS)
-    endif
-  else
 SHLIB_LINK += -lv8
-    ifdef V8_OUTDIR
-SHLIB_LINK += -L$(V8_OUTDIR)
-    endif
-  endif
-endif
 
-OPTFLAGS = -O2
-CCFLAGS = -Wall $(OPTFLAGS)
-ifdef V8_SRCDIR
-override CPPFLAGS += -I$(V8_SRCDIR)/include
+# v8's remote debugger is optional at the moment, since we don't know
+# how much of the v8 installation is built with debugger enabled.
+ifdef ENABLE_DEBUGGER_SUPPORT
+OPT_ENABLE_DEBUGGER_SUPPORT = -DENABLE_DEBUGGER_SUPPORT
 endif
+OPTFLAGS = -O2
+CCFLAGS = -Wall $(OPTFLAGS) $(OPT_ENABLE_DEBUGGER_SUPPORT)
 
 all:
 
 plv8_config.h: plv8_config.h.in Makefile
 	sed -e 's/^#undef PLV8_VERSION/#define PLV8_VERSION "$(PLV8_VERSION)"/' $< > $@
 
-%.o : %.cc plv8_config.h
+%.o : %.cc plv8_config.h plv8.h
 	$(CUSTOM_CC) $(CCFLAGS) $(CPPFLAGS) -fPIC -c -o $@ $<
 
 # Convert .js to .cc
@@ -98,7 +74,7 @@ ifeq ($(shell test $(PG_VERSION_NUM) -ge 90100 && echo yes), yes)
 DATA_built =
 all: $(DATA)
 %--$(PLV8_VERSION).sql: plv8.sql.common
-	sed -e 's/@LANG_NAME@/$*/g' $< | $(CC) -E -P $(CPPFLAGS) - > $@
+	sed -e 's/@LANG_NAME@/$*/g' $< | $(CC) -E -P $(CPPFLAGS) -DLANG_$* - > $@
 %.control: plv8.control.common
 	sed -e 's/@PLV8_VERSION@/$(PLV8_VERSION)/g' $< | $(CC) -E -P -DLANG_$* - > $@
 modules:
@@ -109,26 +85,38 @@ modules:
 subclean:
 	rm -f plv8_config.h $(DATA) $(JSCS)
 
+ifeq ($(shell test $(PG_VERSION_NUM) -lt 90200 && echo yes), yes)
+REGRESS := $(filter-out json_conv, $(REGRESS))
+endif
+
 else # < 9.1
 
 ifeq ($(shell test $(PG_VERSION_NUM) -ge 90000 && echo yes), yes)
-REGRESS := init $(filter-out init-extension dialect, $(REGRESS))
+REGRESS := init $(filter-out init-extension dialect json_conv, $(REGRESS))
 
 else # < 9.0
 
-REGRESS := init $(filter-out init-extension inline startup varparam dialect, $(REGRESS))
+REGRESS := init $(filter-out init-extension inline startup \
+					varparam dialect json_conv window, $(REGRESS))
 
 endif
 
 DATA = uninstall_plv8.sql
 %.sql.in: plv8.sql.common
-	sed -e 's/@LANG_NAME@/$*/g' $< | $(CC) -E -P $(CPPFLAGS) - > $@
+	sed -e 's/@LANG_NAME@/$*/g' $< | $(CC) -E -P $(CPPFLAGS) -DLANG_$* - > $@
 subclean:
 	rm -f plv8_config.h *.sql.in $(JSCS)
 
 endif
 
 clean: subclean
+
+# build will be created by Makefile.v8
+distclean:
+	rm -rf build
+
+static:
+	$(MAKE) -f Makefile.v8
 
 # Check if META.json.version and PLV8_VERSION is equal.
 # Ideally we want to have only one place for this number, but parsing META.json
@@ -140,6 +128,15 @@ clean: subclean
 META_VER := $(shell v8 -e 'print(JSON.parse(read("META.json")).version)' 2>/dev/null)
 ifndef META_VER
 META_VER := $(shell d8 -e 'print(JSON.parse(read("META.json")).version)' 2>/dev/null)
+endif
+ifndef META_VER
+META_VER := $(shell lsc -e 'console.log(JSON.parse(require("fs").readFileSync("META.json")).version)' 2>/dev/null)
+endif
+ifndef META_VER
+META_VER := $(shell coffee -e 'console.log(JSON.parse(require("fs").readFileSync("META.json")).version)' 2>/dev/null)
+endif
+ifndef META_VER
+META_VER := $(shell node -e 'console.log(JSON.parse(require("fs").readFileSync("META.json")).version)')
 endif
 
 integritycheck:
