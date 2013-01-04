@@ -182,12 +182,11 @@ serveResponseFromPg = ({ headers, type, statusCode, body }) ->
 
 # This function is never run in the Express webserver context.
 # It's stringified and injected into postgres during startup.
-rest = ->
-    req = JSON.parse it
+rest = (req) ->
     # link frontend-server/lib into plv8_modules/today
-    models = {List, Task} = (<~ require \today/model .initmodels)
+#    models = {List, Task} = (<~ require \today/model .initmodels)
     result = plv8.execute req.query.q if req.query.q?
-    JSON.stringify do
+    do
         status-code: 200
         type: \application/json
         headers:
